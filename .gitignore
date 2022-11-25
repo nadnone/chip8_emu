@@ -1,0 +1,7 @@
+/target
+test_opcode.ch8
+SDL2test.lib
+SDL2main.lib
+SDL2.lib
+SDL2.dll
+Cargo.lock
