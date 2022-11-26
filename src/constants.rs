@@ -1,7 +1,6 @@
-pub const RAM_SIZE_BYTES: usize = 16;
-pub const DISPLAY: (usize, usize) = (64, 32);
-pub const DELAY_TIMER_MAX_RATE: u8 = 60;
-pub const REGISTRER_SIZE: usize = 16;
+pub const RAM_SIZE_BYTES: usize = 4096; // 4 kBytes
+pub const DISPLAY: (usize, usize) = (128, 64);
+pub const REGISTER_SIZE: usize = 16;
 
 pub const SPRITES_DATA: [u8; 80] = [
 
@@ -25,5 +24,7 @@ pub const SPRITES_DATA: [u8; 80] = [
 ];
 
 
-pub const TIMER_MAX_HZ: u64 = 550;
+pub const TIMER_MAX_HZ: u64 = 550; // fréquence d'horloge
+pub const PROGRAM_FILE: &str = "./IBM_Logo.ch8";
 
+pub const PROGRAM_COUNTER_START_ADDR: u16 = 0x200;

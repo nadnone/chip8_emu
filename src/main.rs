@@ -12,7 +12,7 @@ pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
  
-    let window = video_subsystem.window("chip8 emulator", 800, 600)
+    let window = video_subsystem.window("chip8 emulator", DISPLAY.0 as u32 * 10, DISPLAY.1 as u32* 10)
         .position_centered()
         .build()
         .unwrap();
@@ -24,7 +24,7 @@ pub fn main() {
     canvas.present();
 
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let _event_pump = sdl_context.event_pump().unwrap();
    
     cpu_main::cpu_main(&mut canvas);
 }
