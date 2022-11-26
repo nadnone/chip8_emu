@@ -38,27 +38,18 @@ impl IOManager {
 
     pub fn clear_screen(&self, canvas: &mut Canvas<Window>)
     {
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.clear();
 
-        for y in 0..DISPLAY.1 {
-
-            for x in 0..DISPLAY.0 {
-
-                if self.vga[(x + y * DISPLAY.0)] {
-                    canvas.set_draw_color(Color::RGB(0, 0, 0));
-                    canvas.clear();
-                }
-            }
-
-        }
-
-        canvas.present();
     }
 
     pub fn display(&mut self, bytes: [u8; 2], canvas: &mut Canvas<Window>)
     {
 
         let vx = bytes[0] & 0x0f;
-        let vy = (bytes[1] & 0xf0) >> 4; // right shift
+        let vy = (bytes[1] & 0xf0) >> 3; // right shift
+
+
         let n = bytes[1] & 0x0f;
 
         let x = vx % (DISPLAY.0 as u8);
@@ -66,30 +57,31 @@ impl IOManager {
 
         self.variables_register[0xf] = 0; // on reset le flag
 
-        // 0x050 = adresse de départ des sprites
         let pixel = self.ram[self.index_register as usize]; // informations concernant les pixels
-
-        for p_h in 0..n { // sprite de n pixel lignes 
+        
+        for p_h in 0..n { // sprite de n lignes 
             for p_w in 0..8 { // chaque colonne fait 8 pixel
 
-                let bit = pixel & ((2 as u32).pow(p_w as u32 +1) as u8);
-                
+                let mut bit = pixel & (2 as u32).pow(p_w as u32) as u8; // masque
+                bit = bit >> p_w; // right shift
+
                 // positions absolue
                 let px = x + p_w; 
                 let py = y + p_h;
 
+                // position dans l'écran
                 let vga_pos = (px as u16 + py as u16 * DISPLAY.0 as u16) as usize;
 
 
                 // on check chaque bit de l'octet
-                if bit.count_ones() == 1 && self.vga[ vga_pos ]
+                if bit == 1 && self.vga[ vga_pos ]
                 {
-                    // si les deux sont allumées, on éteint le pixel et on met le flag à true
-                    self.vga[ vga_pos ] = false;
+                    // si les deux sont allumées, on éteint le pixel et on met le flag à 1
+                    self.vga[ vga_pos ] = true;
                     self.variables_register[0xf] = 1; // flag register
                 }
                 // si l'écran est off mais le pixel du sprit est on, on déssine le pixel
-                else if bit.count_ones() == 1 && !self.vga[ vga_pos ]
+                else if bit == 1 && !self.vga[ vga_pos ]
                 {
                     self.vga[ vga_pos ] = true;
 
@@ -104,17 +96,15 @@ impl IOManager {
         
         
         
-        canvas.present();
-
     }
 
     pub fn set_index_register(&mut self, bytes: [u8; 2])
     {
+        // Probablement à revoir
 
-        let first_n = (bytes[0] & 0x0f) << 4; // right shift
+        let shifted = ((bytes[0] as u16) & 0x0f) << 7;
 
-        self.index_register = first_n as u16 & bytes[1] as u16;
-        self.index_register %= 4096;
+        self.index_register = shifted | bytes[1] as u16;
     }
     
     pub fn set_value_register_vx(&mut self, x: u8, nn: u8)
@@ -124,7 +114,9 @@ impl IOManager {
 
     pub fn add_value_register_vx(&mut self, x: u8, nn: u8)
     {
-        if (self.variables_register[x as usize] + nn) < 0xff
+        let var = self.variables_register[x as usize];
+
+        if (var as u16 + nn as u16) > 0xff
         {
             self.variables_register[x as usize] = nn -1;
         }
@@ -137,10 +129,11 @@ impl IOManager {
 
     pub fn jump(&mut self, bytes: [u8; 2])
     {
+        // Probablement à revoir
 
-        let first_n = (bytes[0] & 0x0f) << 4; // right shift
+        let shifted = ((bytes[0] as u16) & 0x0f) << 7;
 
-        self.set_pc(first_n as u16 & bytes[1] as u16);
+        self.set_pc(shifted | bytes[1] as u16);
     }
 
     pub fn inc_pc(&mut self)
@@ -152,7 +145,6 @@ impl IOManager {
     pub fn set_pc(&mut self, pos: u16)
     {
         self.program_counter = pos;
-        self.program_counter %= 4096;
     }
 
     pub fn get_pc(&self) -> u16
@@ -160,13 +152,9 @@ impl IOManager {
         return self.program_counter;
     }
 
-    pub fn load_into_ram(&mut self, bytes: [u8; 1], i: u16)
-    {
-        self.ram[i as usize +1] = bytes[0];
-    }
-
-    pub fn get_ram_array(&mut self)
+    pub fn _get_ram_array(&mut self)
     {
         println!("{:?}", self.ram);
     }
+
 }
