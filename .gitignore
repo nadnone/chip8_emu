@@ -6,3 +6,4 @@ SDL2.lib
 SDL2.dll
 Cargo.lock
 *.ch8
+.vscode
