@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Read, Seek}, time::Duration, process::exit};
+use std::{fs::File, io::{Read, Seek, self}, time::Duration, process::exit};
 
 use sdl2::{render::Canvas, video::Window};
 use crate::{io_manager::IOManager, constants::{TIMER_MAX_HZ, PROGRAM_FILE}};
@@ -44,9 +44,9 @@ fn load_program(iomanager: &mut IOManager)
 
 
 }
-fn check_error(byte1: u8)
+fn check_error(bytes: [u8; 2])
 {
-    if byte1 == 0x00
+    if bytes[0] == 0x00 && bytes[1] == 0x00
     {
         println!("[!] Erreur de lecture d'oppcode: cpu_main.rs");
         exit(1);
@@ -66,23 +66,49 @@ fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>
         return;
     }
 
+    println!("half:{:x} => {:x}:{:x}", half_byte, bytes[0], bytes[1]);
 
     // switch des instructions
     match half_byte {
 
-        0x1 => iomanager.jump(bytes),
+        0x1 => iomanager.jump(bytes), // check
 
-        0x6 => iomanager.set_value_register_vx(bytes[0] & 0x0f, bytes[1]),
+        0x2 => iomanager.inst_2nnn(bytes),
 
-        0x7 => iomanager.add_value_register_vx(bytes[0] & 0x0f, bytes[1]),
+        0x3 => iomanager.inst_3xnn(bytes[0] & 0x0f, bytes[1]),
 
-        0xa => iomanager.set_index_register(bytes),
+        0x4 => iomanager.inst_4xnn(bytes[0] & 0x0f, bytes[1]),
 
-        0xd => iomanager.display(bytes, canvas),
+        0x5 => iomanager.inst_5xy0(bytes),
 
-        0x0 => check_error(bytes[1]),
+        0x6 => iomanager.set_value_register_vx(bytes[0] & 0x0f, bytes[1]), // check
 
-        _ => println!("[!] exception code: {:x}", half_byte)
+        0x7 => iomanager.add_value_register_vx_7xnn(bytes[0] & 0x0f, bytes[1]), // check
+
+        0x8 => iomanager.inst_8xy_x(bytes),
+
+        0x9 => iomanager.inst_9xy0(bytes),
+
+        0xa => iomanager.set_index_register_annn(bytes), // check
+
+        0xd => iomanager.display(bytes, canvas), // check
+
+        0xf => iomanager.inst_fx_xx(bytes), 
+
+        0x0 => {
+
+            match bytes[1] {
+                
+                0x0 => check_error(bytes),
+                
+                0xee => iomanager.inst_00ee(),
+
+                _ => {}
+            }
+            
+        }
+
+        _ => println!("[!] exception opcode: {:x}", half_byte)
     }
 
 }

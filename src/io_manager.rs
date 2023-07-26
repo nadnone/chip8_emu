@@ -10,6 +10,10 @@ pub struct IOManager {
     program_counter: u16,
     index_register: u16,
     variables_register: [u8; REGISTER_SIZE],
+    delay_timer: u8,
+    sound_timer: u8,
+    stack: Vec<u16>,
+    stack_pointer: u16
 }
 
 impl IOManager {
@@ -32,6 +36,10 @@ impl IOManager {
             program_counter: PROGRAM_COUNTER_START_ADDR,
             index_register: 0,
             variables_register: [0; REGISTER_SIZE],
+            delay_timer: 0,
+            sound_timer: 0,
+            stack: vec![],
+            stack_pointer: 0
         }
 
     }
@@ -74,18 +82,18 @@ impl IOManager {
 
 
                 // positions absolue
-                let x: u16 = vx + 8-p_w;
+                let x: u16 = vx + 8 - p_w; // on inverse l'ordre de lecture avec 8 - p_w
                 let y: u16 = vy + p_h;
 
 
                 // limites d'affichage
                 if x >= DISPLAY.0 as u16
                 {
-                    break;
+                    break; // on arrête la ligne
                 }
                 if y >= DISPLAY.1 as u16
                 {
-                    return;
+                    return; // on arrête le déssin
                 }
 
               
@@ -131,7 +139,7 @@ impl IOManager {
         
     }
 
-    pub fn set_index_register(&mut self, bytes: [u8; 2])
+    pub fn set_index_register_annn(&mut self, bytes: [u8; 2])
     {
         let shifted = ((bytes[0] as u16) & 0x0f) << 8;
 
@@ -143,7 +151,7 @@ impl IOManager {
         self.variables_register[x as usize] = nn;
     }
 
-    pub fn add_value_register_vx(&mut self, x: u8, nn: u8)
+    pub fn add_value_register_vx_7xnn(&mut self, x: u8, nn: u8)
     {
         let var = self.variables_register[x as usize];
 
@@ -154,9 +162,10 @@ impl IOManager {
 
     pub fn jump(&mut self, bytes: [u8; 2])
     {
-        let shifted = ((bytes[0] as u16) & 0x0f) << 8;
+        let shifted = ((bytes[0] & 0x0f) as u16) << 8;
 
         self.set_pc(shifted | bytes[1] as u16);
+
     }
 
     pub fn inc_pc(&mut self)
@@ -184,10 +193,123 @@ impl IOManager {
         return [self.ram[i as usize], self.ram[i as usize + 1]];
     }
 
+    /// word : data | i : index
     pub fn put_into_ram(&mut self, word: [u8; 2], i: u16)
     {
         self.ram[i as usize] = word[0];
         self.ram[i as usize + 1] = word[1];
     }
+
+    pub fn inst_3xnn(&mut self, x: u8, nn: u8)
+    {
+        if self.variables_register[x as usize] == nn // if VX == NN
+        {  
+            // skip instruction
+            self.inc_pc();
+        }
+    }
+
+    pub fn inst_2nnn(&mut self, nnn: [u8; 2])
+    {
+        // on incrémente le stack
+        self.stack_pointer += 1;
+
+        // on récupère le nouveau PC
+        let first = ((nnn[0] & 0x0f) as u16) << 8;
+        let secnd = nnn[1] as u16;
+
+        // on push to stack
+        self.stack.push(self.get_pc());
+
+        //on change le pc à nnn
+        self.set_pc(first | secnd);
+
+    }
+
+    pub fn inst_00ee(&mut self)
+    {
+        // popping from stack
+        let subroutine = self.stack.pop().unwrap();
+
+        self.set_pc(subroutine);
+
+    }
+
+    pub fn inst_4xnn(&mut self, x: u8, nn: u8)
+    {
+        if self.variables_register[x as usize] != nn // if VX != NN
+        {  
+            // skip instruction
+            self.inc_pc();
+        }
+    }
+
+    pub fn inst_5xy0(&mut self, bytes: [u8; 2])
+    {
+        let x = bytes[0] & 0x0f;
+        let y = (bytes[1] & 0xf0) >> 4;
+
+        if self.variables_register[x as usize] == self.variables_register[y as usize] // VX == VY
+        {
+            self.inc_pc(); // skip
+        }
+    }
+
+    pub fn inst_9xy0(&mut self, bytes: [u8; 2])
+    {
+        let x = bytes[0] & 0x0f;
+        let y = (bytes[1] & 0xf0) >> 4;
+
+        if self.variables_register[x as usize] != self.variables_register[y as usize] // VX != VY
+        {
+            self.inc_pc(); // skip
+        }
+    }
+
+    pub fn inst_8xy_x(&mut self, bytes: [u8; 2])
+    {
+        let x = bytes[0] & 0x0f;
+        let y = (bytes[1] & 0xf0) >> 4;
+        let last = bytes[1] & 0x0f;
+
+        match last {
+            
+            0x0 => self.set_value_register_vx(x, y),
+
+            0x1 => self.set_value_register_vx(x, self.variables_register[x as usize] | x),
+
+            _ => println!("[!] exception sub-opcode: {:x}", last)
+        }
+
+   
+    }
+
+    pub fn inst_fx_xx(&mut self, bytes: [u8; 2])
+    {
+        let x: u8 = bytes[0] & 0x0f;
+
+        println!("{:x}", x);
+        println!("{:x}", bytes[1]);
+
+        match bytes[1] {
+            
+            0x07 => self.set_value_register_vx(x, self.delay_timer),
+
+            0x15 => self.delay_timer = self.variables_register[x as usize],
+
+            0x18 => self.sound_timer = self.variables_register[x as usize],
+
+            0x29 => {
+                let ram_data = self.get_from_ram(x as u16);
+                self.index_register = (ram_data[0] | ram_data[1]) as u16;
+            }
+
+           
+            _ => println!("[!] exception sub-opcode: {:x}", bytes[1])
+        }
+
+   
+    }
+
 
 }
