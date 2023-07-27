@@ -1,9 +1,9 @@
-use std::{fs::File, io::{Read, Seek, self}, time::Duration, process::exit};
+use std::{fs::File, io::{Read, Seek}, time::Duration, process::exit};
 
 use sdl2::{render::Canvas, video::Window};
-use crate::{io_manager::IOManager, constants::{TIMER_MAX_HZ, PROGRAM_FILE}};
+use crate::{io_manager::IOManager, misc_cpu::MiscCPU, constants::{TIMER_MAX_HZ, PROGRAM_FILE}};
 
-fn load_program(iomanager: &mut IOManager)
+fn load_program(io_manager: &mut IOManager)
 {
 
     for i in (0x200..0xfff).step_by(2) {
@@ -34,7 +34,7 @@ fn load_program(iomanager: &mut IOManager)
         }
 
 
-        iomanager.put_into_ram(byte_buffer, i);
+        io_manager.put_into_ram(byte_buffer, i);
 
 
 
@@ -53,7 +53,7 @@ fn check_error(bytes: [u8; 2])
     }
 }
 
-fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>)
+fn decode(bytes: [u8; 2], io_manger: &mut IOManager, cpu_manager: &mut MiscCPU, canvas: &mut Canvas<Window>)
 {
 
     // décoder l'instruction
@@ -62,7 +62,7 @@ fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>
 
     if bytes[0] == 0x00 && bytes[1] == 0xe0 
     {
-        iomanager.clear_screen(canvas);
+        io_manger.clear_screen(canvas);
         return;
     }
 
@@ -71,29 +71,29 @@ fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>
     // switch des instructions
     match half_byte {
 
-        0x1 => iomanager.jump(bytes), // check
+        0x1 => cpu_manager.jump(bytes), // check
 
-        0x2 => iomanager.inst_2nnn(bytes),
+        0x2 => cpu_manager.inst_2nnn(bytes),
 
-        0x3 => iomanager.inst_3xnn(bytes[0] & 0x0f, bytes[1]),
+        0x3 => cpu_manager.inst_3xnn(bytes[0] & 0x0f, bytes[1]),
 
-        0x4 => iomanager.inst_4xnn(bytes[0] & 0x0f, bytes[1]),
+        0x4 => cpu_manager.inst_4xnn(bytes[0] & 0x0f, bytes[1]),
 
-        0x5 => iomanager.inst_5xy0(bytes),
+        0x5 => cpu_manager.inst_5xy0(bytes),
 
-        0x6 => iomanager.set_value_register_vx(bytes[0] & 0x0f, bytes[1]), // check
+        0x6 => cpu_manager.set_value_register_vx_6xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x7 => iomanager.add_value_register_vx_7xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x7 => cpu_manager.add_value_register_vx_7xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x8 => iomanager.inst_8xy_x(bytes),
+        0x8 => cpu_manager.inst_8xy_x(bytes),
 
-        0x9 => iomanager.inst_9xy0(bytes),
+        0x9 => cpu_manager.inst_9xy0(bytes),
 
-        0xa => iomanager.set_index_register_annn(bytes), // check
+        0xa => cpu_manager.set_index_register_annn(bytes), // check
 
-        0xd => iomanager.display(bytes, canvas), // check
+        0xd => io_manger.display(bytes, canvas, cpu_manager), // check
 
-        0xf => iomanager.inst_fx_xx(bytes), 
+        0xf => io_manger.inst_fx_xx(cpu_manager, bytes), 
 
         0x0 => {
 
@@ -101,7 +101,7 @@ fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>
                 
                 0x0 => check_error(bytes),
                 
-                0xee => iomanager.inst_00ee(),
+                0xee => cpu_manager.inst_00ee(),
 
                 _ => {}
             }
@@ -113,24 +113,26 @@ fn decode(bytes: [u8; 2], iomanager: &mut IOManager, canvas: &mut Canvas<Window>
 
 }
 
-fn fetch(iomanager: &mut IOManager) -> [u8; 2]
+fn fetch(io_manager: &mut IOManager, cpu_manager: &mut MiscCPU) -> [u8; 2]
 {
-    let word = iomanager.get_from_ram(iomanager.get_pc());
-    iomanager.inc_pc();
+    let word = io_manager.get_from_ram(cpu_manager.get_pc());
+    cpu_manager.inc_pc();
 
     return  word;
 }
 
 pub fn cpu_main(canvas: &mut Canvas<Window>)
 {
-    let mut iomanager = IOManager::initialize();
-    load_program(&mut iomanager);
+    let mut cpu_manager = MiscCPU::initialize();
+    let mut io_manager = IOManager::initialize();
+
+    load_program(&mut io_manager);
 
     loop 
     {
-        let word = fetch(&mut iomanager);
+        let word = fetch(&mut io_manager, &mut cpu_manager);
 
-        decode(word, &mut iomanager, canvas);
+        decode(word, &mut io_manager, &mut cpu_manager, canvas);
 
 
         
