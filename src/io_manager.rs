@@ -54,11 +54,11 @@ impl IOManager {
         let n = bytes[1] & 0x0f;
 
         // les positions
-        let vx = cpu_manager.get_var_register(vx_i as usize) as u16 % DISPLAY.0 as u16;
-        let vy = cpu_manager.get_var_register(vy_i as usize) as u16 % DISPLAY.1 as u16;
+        let vx = cpu_manager.get_values_register(vx_i as usize) as u16 % DISPLAY.0 as u16;
+        let vy = cpu_manager.get_values_register(vy_i as usize) as u16 % DISPLAY.1 as u16;
 
         // flag
-        cpu_manager.set_var_register(0xf, 0); // on reset
+        cpu_manager.set_values_register(0xf, 0); // on reset
 
         
 
@@ -100,7 +100,7 @@ impl IOManager {
                     canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
 
                     // on met le flag à 1
-                    cpu_manager.set_var_register(0xf, 1); // flag register. à 1 quand collision
+                    cpu_manager.set_values_register(0xf, 1); // flag register. à 1 quand collision
 
                     self.vga[ vga_pos ] = 0;
                 }
@@ -148,24 +148,65 @@ impl IOManager {
     {
         let x: u8 = bytes[0] & 0x0f;
 
-        println!("{:x}", x);
-        println!("{:x}", bytes[1]);
-
         match bytes[1] {
             
             0x07 => cpu_manager.add_value_register_vx_7xnn(x, self.delay_timer),
 
-            0x15 => self.delay_timer = cpu_manager.get_var_register(x as usize),
+            0x15 => self.delay_timer = cpu_manager.get_values_register(x as usize),
 
-            0x18 => self.sound_timer = cpu_manager.get_var_register(x as usize),
+            0x18 => self.sound_timer = cpu_manager.get_values_register(x as usize),
 
             0x29 => {
-                let ram_data = self.get_from_ram(x as u16);
+                let vx = cpu_manager.get_values_register(x as usize);
+
+                let ram_data = self.get_from_ram(vx as u16);
+                
                 cpu_manager.set_index_register( (ram_data[0] | ram_data[1]) as u16 );
             }
 
+            0x33 => {
+
+                let vx = cpu_manager.get_values_register(x as usize);
+
+                let secnds = vx % 100;
+
+                let last = vx % 10;
+                let first = (vx - secnds) / 100;
+                let middle = (secnds - last) / 10;
+
+                let i = cpu_manager.get_index_register();
+
+                self.ram[i as usize + 0] = first;
+                self.ram[i as usize + 1] = middle;
+                self.ram[i as usize + 2] = last;
+
+            }
+
+            0x55 => { // store V0 to VX in ram at I starting point
+
+                let i = cpu_manager.get_index_register() as usize;
+
+                for v_i in 0..(x+1) as usize {
+ 
+                    self.ram[i + v_i] = cpu_manager.get_values_register(v_i);
+                }
+
+            }
+
+            0x65 => {
+
+                let i = cpu_manager.get_index_register() as usize;
+
+                for v_i in 0..(x+1) as usize {
+ 
+                    cpu_manager.set_values_register(v_i, self.ram[i + v_i]);
+                }
+
+            }
+
+
            
-            _ => println!("[!] exception sub-opcode: {:x}", bytes[1])
+            _ => println!("[!] exception sub-opcode (io_manager.rs):  {:x}", bytes[1])
         }
 
    

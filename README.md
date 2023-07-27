@@ -3,6 +3,11 @@
 
 - In progress...
 
+- [ ] opcodes
+- [ ] sounds
+- [ ] keyboard
+- [ ] ...
+ 
 ![demo](./demo/demo.gif)
 
 Sources: 
@@ -15,3 +20,4 @@ Sources:
 - http://www.cs.columbia.edu/~sedwards/classes/2016/4840-spring/reports/Chip8.pdf
 - https://www.includehelp.com/rust/reverse-bits-of-a-binary-number.aspx
 - https://github.com/trapexit/chip-8_documentation
+- https://www.freecodecamp.org/news/creating-your-very-own-chip-8-emulator/

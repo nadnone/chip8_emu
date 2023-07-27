@@ -53,7 +53,7 @@ fn check_error(bytes: [u8; 2])
     }
 }
 
-fn decode(bytes: [u8; 2], io_manger: &mut IOManager, cpu_manager: &mut MiscCPU, canvas: &mut Canvas<Window>)
+fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU, canvas: &mut Canvas<Window>)
 {
 
     // décoder l'instruction
@@ -62,11 +62,11 @@ fn decode(bytes: [u8; 2], io_manger: &mut IOManager, cpu_manager: &mut MiscCPU, 
 
     if bytes[0] == 0x00 && bytes[1] == 0xe0 
     {
-        io_manger.clear_screen(canvas);
+        io_manager.clear_screen(canvas);
         return;
     }
 
-    println!("half:{:x} => {:x}:{:x}", half_byte, bytes[0], bytes[1]);
+    //println!("half:{:x} => {:x}:{:x}", half_byte, bytes[0], bytes[1]);
 
     // switch des instructions
     match half_byte {
@@ -91,9 +91,9 @@ fn decode(bytes: [u8; 2], io_manger: &mut IOManager, cpu_manager: &mut MiscCPU, 
 
         0xa => cpu_manager.set_index_register_annn(bytes), // check
 
-        0xd => io_manger.display(bytes, canvas, cpu_manager), // check
+        0xd => io_manager.display(bytes, canvas, cpu_manager), // check
 
-        0xf => io_manger.inst_fx_xx(cpu_manager, bytes), 
+        0xf => io_manager.inst_fx_xx(cpu_manager, bytes), 
 
         0x0 => {
 

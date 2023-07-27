@@ -31,12 +31,12 @@ impl MiscCPU {
 
     }
 
-    pub fn set_var_register(&mut self, x: usize, var: u8)
+    pub fn set_values_register(&mut self, x: usize, var: u8)
     {
         self.variables_register[x] = var;
     }
 
-    pub fn get_var_register(&self, x: usize) -> u8
+    pub fn get_values_register(&self, x: usize) -> u8
     {
         return self.variables_register[x];
     }
@@ -151,11 +151,81 @@ impl MiscCPU {
 
         match last {
             
-            0x0 => self.set_value_register_vx_6xnn(x, y),
+            0x0 => self.variables_register[x as usize] = self.variables_register[y as usize],
 
-            0x1 => self.set_value_register_vx_6xnn(x, self.variables_register[x as usize] | x),
+            0x1 => self.variables_register[x as usize] |= self.variables_register[y as usize], // OR bitwise
 
-            _ => println!("[!] exception sub-opcode: {:x}", last)
+            0x2 => self.variables_register[x as usize] &= self.variables_register[y as usize], // AND bitwise
+            
+            0x3 => self.variables_register[x as usize] ^= self.variables_register[y as usize], // XOR bitwise
+            
+            0x4 => { // addition
+
+                let add = self.variables_register[x as usize] as u16 + self.variables_register[y as usize] as u16;
+                
+
+                self.variables_register[0xf] = 0;
+
+                if add > 0xff
+                {
+                    // si overflow flag à 1
+                    self.variables_register[0xf] = 1;
+                }
+               
+                self.variables_register[x as usize] = add as u8;
+
+            }
+
+            0x5 => { // soustraction VX - VY
+                
+                
+                let vx = self.variables_register[x as usize]; 
+                let vy = self.variables_register[y as usize];
+                
+
+                self.variables_register[0xf] = 0;
+
+                if vx > vy
+                {
+                    // si overflow flag à 1
+                    self.variables_register[0xf] = 1;
+                }
+               
+                let sub = vx as i16 - vy as i16;
+
+                self.variables_register[x as usize] = sub as u8;
+
+
+            }
+
+            0x6 => self.set_value_register_vx_6xnn(x, self.variables_register[y as usize] >> 1), // VY bitshift right 1
+
+            0x7 => { // soustraction VY - VX
+                
+                let vx = self.variables_register[x as usize]; 
+                let vy = self.variables_register[y as usize];
+                
+
+                self.variables_register[0xf] = 0;
+
+                if vx < vy
+                {
+                    // si overflow flag à 1
+                    self.variables_register[0xf] = 1;
+                }
+               
+                let sub = vy as i16 - vx as i16;
+
+                self.variables_register[x as usize] = sub as u8;
+
+            }
+
+            0xe => self.set_value_register_vx_6xnn(x, self.variables_register[y as usize] << 1), // VY bitshift left 1
+
+            
+
+
+            _ => println!("[!] exception sub-opcode (misc_cpu.rs): {:x}", last)
         }
 
    
