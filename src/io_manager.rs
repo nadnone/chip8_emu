@@ -36,6 +36,16 @@ impl IOManager {
 
     }
 
+    pub fn _get_ram_array(&self, x: usize, y: usize)
+    {
+        let mut range = vec![];
+        for i in x..y+1 {
+            range.push(self.ram[i]);
+        }
+        
+        println!("RAM range data: {:?}", range);
+    }
+
     pub fn clear_screen(&self, canvas: &mut Canvas<Window>)
     {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -54,72 +64,64 @@ impl IOManager {
         let n = bytes[1] & 0x0f;
 
         // les positions
-        let vx = cpu_manager.get_values_register(vx_i as usize) as u16 % DISPLAY.0 as u16;
-        let vy = cpu_manager.get_values_register(vy_i as usize) as u16 % DISPLAY.1 as u16;
+        let vx = cpu_manager.get_values_register(vx_i as usize) % DISPLAY.0 as u8;
+        let vy = cpu_manager.get_values_register(vy_i as usize) % DISPLAY.1 as u8;
 
         // flag
         cpu_manager.set_values_register(0xf, 0); // on reset
 
         
 
-        for p_h in 0..n as u16 { // ligne de la sprite
+        for p_h in 0..n as u8 { // ligne de la sprite
             
-            for p_w in 0..8 as u16 { // chaque colonne fait 8 pixel
+            let mut sprite = self.ram[cpu_manager.get_index_register() as usize + p_h as usize]; // informations concernant les pixels
 
-                let pixel = self.ram[cpu_manager.get_index_register() as usize + p_h as usize]; // informations concernant les pixels
+            for p_w in 0..8 as u8 { // chaque colonne fait 8 pixel
 
-                let mut bit = pixel & (1 << p_w); // masque
-                bit = bit & (1 << p_w); // on reverse et on prend le n bit
-                bit >>= p_w; // on décale à droite pour prendre le bit le plus haut
-
-
-                // positions absolue
-                let x: u16 = vx + 8 - p_w; // on inverse l'ordre de lecture avec 8 - p_w
-                let y: u16 = vy + p_h;
-
-
-                // limites d'affichage
-                if x >= DISPLAY.0 as u16
+                if (sprite & 0x80) > 0 // si le premier bit à gauche = 1, on dessine ou écrase
                 {
-                    break; // on arrête la ligne
+
+                    // valeurs absolues
+                    let mut x = vx + p_w;
+                    let mut y = vy + p_h;
+    
+                    // limite d'écran
+                    if x > DISPLAY.0 as u8
+                    {
+                        x -= DISPLAY.0 as u8;
+                    }
+                    if y > DISPLAY.1 as u8
+                    {
+                        y -= DISPLAY.1 as u8;
+                    }
+    
+    
+                    let pixel_loc = (x as u16 + (y as u16 * DISPLAY.1 as u16)) as usize;
+    
+                    // si vga = 1 OR sprite = 1 alors on allume, sinon on éteint
+                    self.vga[ pixel_loc ] |= 1; // OR
+
+
+                    if self.vga[pixel_loc] == 1 // si pixel allumé
+                    {
+                        canvas.set_draw_color(Color::RGB(255, 255, 255));
+                        canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+                    }
+                    else // sinon forcément éteint
+                    {
+                        canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+
+                        cpu_manager.set_values_register(0xf, 1);
+
+                    }
+
                 }
-                if y >= DISPLAY.1 as u16
-                {
-                    return; // on arrête le déssin
-                }
-
-              
-                // position dans l'écran
-                let vga_pos = (x + y * DISPLAY.0 as u16) as usize;
 
 
-                // on check
-                if bit == 1 && self.vga[ vga_pos ] == 1 // collision de pixels; on les éteints
-                {
-                    canvas.set_draw_color(Color::RGB(0, 0, 0));
-                    canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
 
-                    // on met le flag à 1
-                    cpu_manager.set_values_register(0xf, 1); // flag register. à 1 quand collision
+                sprite <<= 1; // on décale à gauche d'un bit (left shift)
 
-                    self.vga[ vga_pos ] = 0;
-                }
-                else if bit == 1// si bit == 1 , on dessine 
-                {
-                    // on dessine sur la fenêtre
-                    canvas.set_draw_color(Color::RGB(255, 255, 255));
-                    canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-
-                    self.vga[ vga_pos ] = 1;
-                }
-                else if self.vga[ vga_pos ] == 1 // on éteint le pixel
-                {
-                    canvas.set_draw_color(Color::RGB(0, 0, 0));
-                    canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-
-                    self.vga[ vga_pos ] = 0;
-                }
-                
 
             } 
             
@@ -146,33 +148,38 @@ impl IOManager {
 
     pub fn inst_fx_xx(&mut self, cpu_manager: &mut MiscCPU, bytes: [u8; 2])
     {
-        let x: u8 = bytes[0] & 0x0f;
+        let x = bytes[0] & 0x0f;
 
         match bytes[1] {
             
-            0x07 => cpu_manager.inst_7xnn(x, self.delay_timer),
+            0x07 => cpu_manager.set_values_register(x as usize, self.delay_timer),
 
             0x15 => self.delay_timer = cpu_manager.get_values_register(x as usize),
 
             0x18 => self.sound_timer = cpu_manager.get_values_register(x as usize),
 
+            0x1e => {
+                let i = cpu_manager.get_index_register();
+                let vx = cpu_manager.get_values_register(x as usize) as u16;
+
+                cpu_manager.set_index_register(i.wrapping_add(vx));
+
+            }
+
             0x29 => {
                 let vx = cpu_manager.get_values_register(x as usize);
 
-                let ram_data = self.get_from_ram(vx as u16);
-                
-                cpu_manager.set_index_register( (ram_data[0] | ram_data[1]) as u16 );
+                cpu_manager.set_index_register( vx as u16 * 5 ); // vx * 5 car chaque sprit fait 5 bytes de long
             }
 
             0x33 => {
 
+
                 let vx = cpu_manager.get_values_register(x as usize);
 
-                let secnds = vx % 100;
-
+                let first = vx / 100;
+                let middle = (vx % 100 ) / 10;
                 let last = vx % 10;
-                let first = (vx - secnds) / 100;
-                let middle = (secnds - last) / 10;
 
                 let i = cpu_manager.get_index_register();
 
@@ -182,13 +189,13 @@ impl IOManager {
 
             }
 
-            0x55 => {  // save register to memory
+            0x55 => { // save register to memory
 
-                let i = cpu_manager.get_index_register() as usize;
+                let i = cpu_manager.get_index_register();
 
-                for v_i in 0..(x+1) as usize {
- 
-                    self.ram[i + v_i] = cpu_manager.get_values_register(v_i);
+                for v_i in 0..=(x as u16) {
+                    
+                    self.ram[(v_i + i) as usize] = cpu_manager.get_values_register(v_i as usize);
 
                 }
 
@@ -196,32 +203,14 @@ impl IOManager {
 
             0x65 => { // load register from memory
 
-                let i = cpu_manager.get_index_register() as usize;
-
-                for v_i in 0..(x+1) as usize {
- 
-                    cpu_manager.set_values_register(v_i, self.ram[i + v_i]);
-                }
-
-            }
-
-            0x1e => {
                 let i = cpu_manager.get_index_register();
-                let vx = cpu_manager.get_values_register(x as usize);
 
-                let add = vx as u16 + i;
+                for v_i in 0..=(x as u16) {
 
-                cpu_manager.set_values_register(0xf, 0); // flag à 0
-
-                if add > 0x0fff // overflow
-                {
-                    cpu_manager.set_values_register(0xf, 1); // flag à 1
+                    cpu_manager.set_values_register(v_i as usize, self.ram[(v_i + i) as usize]);
                 }
-
-                cpu_manager.set_values_register(x as usize, add as u8);
-
             }
-            
+
            
             _ => println!("[!] exception sub-opcode (io_manager.rs):  {:x}", bytes[1])
         }

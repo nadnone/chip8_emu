@@ -1,23 +1,25 @@
 use std::{fs::File, io::{Read, Seek}, time::Duration, process::exit};
 
 use sdl2::{render::Canvas, video::Window};
-use crate::{io_manager::IOManager, misc_cpu::MiscCPU, constants::{TIMER_MAX_HZ, PROGRAM_FILE}};
+use crate::{io_manager::IOManager, misc_cpu::MiscCPU, constants::TIMER_MAX_HZ};
 
-fn load_program(io_manager: &mut IOManager)
+fn load_program(io_manager: &mut IOManager, filename: &str)
 {
+
+    // à déplacer dans IO_manager.rs
 
     for i in (0x200..0xfff).step_by(2) {
         
         
         // on ouvre le fichier
-        let mut f = File::open(PROGRAM_FILE).unwrap();
+        let mut f = File::open(filename).unwrap();
         let mut byte_buffer = [0; 2];
 
 
         // on se déplace à l'endroit du curseur
         if f.seek( 
             std::io::SeekFrom::Current(
-                i as i64 - 0x200
+                i as i64 - 512
             ) 
         ).is_err()
         {
@@ -60,40 +62,34 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
 
     let half_byte = (bytes[0] & 0xf0) >> 4; // on prend la première moitié d'un byte
 
-    if bytes[0] == 0x00 && bytes[1] == 0xe0 
-    {
-        io_manager.clear_screen(canvas);
-        return;
-    }
-
     //println!("half:{:x} => {:x}:{:x}", half_byte, bytes[0], bytes[1]);
 
     // switch des instructions
     match half_byte {
 
-        0x1 => cpu_manager.jump(bytes), // check
+        0x1 => cpu_manager.inst_1nnn(bytes), 
 
-        0x2 => cpu_manager.inst_2nnn(bytes), // check
+        0x2 => cpu_manager.inst_2nnn(bytes), 
 
-        0x3 => cpu_manager.inst_3xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x3 => cpu_manager.inst_3xnn(bytes[0] & 0x0f, bytes[1]), 
 
-        0x4 => cpu_manager.inst_4xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x4 => cpu_manager.inst_4xnn(bytes[0] & 0x0f, bytes[1]), 
 
-        0x5 => cpu_manager.inst_5xy0(bytes), // check
+        0x5 => cpu_manager.inst_5xy0(bytes), 
 
-        0x6 => cpu_manager.set_value_register_vx_6xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x6 => cpu_manager.inst_6xnn(bytes[0] & 0x0f, bytes[1]), 
 
-        0x7 => cpu_manager.inst_7xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x7 => cpu_manager.inst_7xnn(bytes[0] & 0x0f, bytes[1]), 
 
-        0x8 => cpu_manager.inst_8xy_x(bytes), // check
+        0x8 => cpu_manager.inst_8xy_x(bytes),
 
-        0x9 => cpu_manager.inst_9xy0(bytes), // check
+        0x9 => cpu_manager.inst_9xy0(bytes),
 
-        0xa => cpu_manager.set_index_register_annn(bytes), // check
+        0xa => cpu_manager.inst_annn(bytes), 
 
-        0xd => io_manager.display(bytes, canvas, cpu_manager), // check
+        0xd => io_manager.display(bytes, canvas, cpu_manager),
 
-        0xf => io_manager.inst_fx_xx(cpu_manager, bytes), 
+        0xf => io_manager.inst_fx_xx(cpu_manager, bytes),
 
         0x0 => {
 
@@ -101,6 +97,8 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
                 
                 0x0 => check_error(bytes),
                 
+                0xe0 => io_manager.clear_screen(canvas),
+
                 0xee => cpu_manager.inst_00ee(),
 
                 _ => println!("[!] exception sub-opcode (cpu.main.rs): {:x}", bytes[1])
@@ -111,6 +109,11 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
         _ => println!("[!] exception opcode: {:x}", half_byte)
     }
 
+
+    //io_manager.get_ram_array(1118, 1120);
+    //cpu_manager.get_register_range_array(0, 0xf);
+
+
 }
 
 fn fetch(io_manager: &mut IOManager, cpu_manager: &mut MiscCPU) -> [u8; 2]
@@ -118,15 +121,23 @@ fn fetch(io_manager: &mut IOManager, cpu_manager: &mut MiscCPU) -> [u8; 2]
     let word = io_manager.get_from_ram(cpu_manager.get_pc());
     cpu_manager.inc_pc();
 
-    return  word;
+    return word;
 }
 
-pub fn cpu_main(canvas: &mut Canvas<Window>)
+pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>)
 {
     let mut cpu_manager = MiscCPU::initialize();
     let mut io_manager = IOManager::initialize();
 
-    load_program(&mut io_manager);
+    if argv.len() < 1
+    {
+        println!("[!] ./chip8_emu.exe file_rom.ch8");
+        return;
+    }
+
+    println!("{:?}", argv[1]);
+
+    load_program(&mut io_manager, argv[1].as_str());
 
     loop 
     {

@@ -1,3 +1,5 @@
+use std::env;
+
 use constants::DISPLAY;
 use sdl2; 
 use sdl2::pixels::Color;
@@ -27,5 +29,5 @@ pub fn main() {
 
     let _event_pump = sdl_context.event_pump().unwrap();
    
-    cpu_main::cpu_main(&mut canvas);
+    cpu_main::cpu_main(&mut canvas, env::args().collect());
 }
