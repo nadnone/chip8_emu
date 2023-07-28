@@ -150,7 +150,7 @@ impl IOManager {
 
         match bytes[1] {
             
-            0x07 => cpu_manager.add_value_register_vx_7xnn(x, self.delay_timer),
+            0x07 => cpu_manager.inst_7xnn(x, self.delay_timer),
 
             0x15 => self.delay_timer = cpu_manager.get_values_register(x as usize),
 
@@ -182,18 +182,19 @@ impl IOManager {
 
             }
 
-            0x55 => { // store V0 to VX in ram at I starting point
+            0x55 => {  // save register to memory
 
                 let i = cpu_manager.get_index_register() as usize;
 
                 for v_i in 0..(x+1) as usize {
  
                     self.ram[i + v_i] = cpu_manager.get_values_register(v_i);
+
                 }
 
             }
 
-            0x65 => {
+            0x65 => { // load register from memory
 
                 let i = cpu_manager.get_index_register() as usize;
 
@@ -204,7 +205,23 @@ impl IOManager {
 
             }
 
+            0x1e => {
+                let i = cpu_manager.get_index_register();
+                let vx = cpu_manager.get_values_register(x as usize);
 
+                let add = vx as u16 + i;
+
+                cpu_manager.set_values_register(0xf, 0); // flag à 0
+
+                if add > 0x0fff // overflow
+                {
+                    cpu_manager.set_values_register(0xf, 1); // flag à 1
+                }
+
+                cpu_manager.set_values_register(x as usize, add as u8);
+
+            }
+            
            
             _ => println!("[!] exception sub-opcode (io_manager.rs):  {:x}", bytes[1])
         }

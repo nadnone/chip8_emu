@@ -26,6 +26,6 @@ pub const SPRITES_DATA: [u8; 80] = [
 
 
 pub const TIMER_MAX_HZ: u64 = 550; // fréquence d'horloge
-pub const PROGRAM_FILE: &str = "./test_opcode.ch8";
+pub const PROGRAM_FILE: &str = "./3-corax+.ch8";
 
 pub const PROGRAM_COUNTER_START_ADDR: u16 = 512;

@@ -73,21 +73,21 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
 
         0x1 => cpu_manager.jump(bytes), // check
 
-        0x2 => cpu_manager.inst_2nnn(bytes),
+        0x2 => cpu_manager.inst_2nnn(bytes), // check
 
-        0x3 => cpu_manager.inst_3xnn(bytes[0] & 0x0f, bytes[1]),
+        0x3 => cpu_manager.inst_3xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x4 => cpu_manager.inst_4xnn(bytes[0] & 0x0f, bytes[1]),
+        0x4 => cpu_manager.inst_4xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x5 => cpu_manager.inst_5xy0(bytes),
+        0x5 => cpu_manager.inst_5xy0(bytes), // check
 
         0x6 => cpu_manager.set_value_register_vx_6xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x7 => cpu_manager.add_value_register_vx_7xnn(bytes[0] & 0x0f, bytes[1]), // check
+        0x7 => cpu_manager.inst_7xnn(bytes[0] & 0x0f, bytes[1]), // check
 
-        0x8 => cpu_manager.inst_8xy_x(bytes),
+        0x8 => cpu_manager.inst_8xy_x(bytes), // check
 
-        0x9 => cpu_manager.inst_9xy0(bytes),
+        0x9 => cpu_manager.inst_9xy0(bytes), // check
 
         0xa => cpu_manager.set_index_register_annn(bytes), // check
 
@@ -103,7 +103,7 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
                 
                 0xee => cpu_manager.inst_00ee(),
 
-                _ => {}
+                _ => println!("[!] exception sub-opcode (cpu.main.rs): {:x}", bytes[1])
             }
             
         }
@@ -140,7 +140,7 @@ pub fn cpu_main(canvas: &mut Canvas<Window>)
 
 
 
-        let dur = Duration::from_millis(TIMER_MAX_HZ / 10);
+        let dur = Duration::from_millis(TIMER_MAX_HZ / 1000);
         std::thread::sleep(dur);
 
     }

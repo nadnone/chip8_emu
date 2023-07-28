@@ -3,9 +3,12 @@
 
 - In progress...
 
-- [ ] opcodes
-- [ ] sounds
-- [ ] keyboard
+- [x] [IBM Logo](https://github.com/Timendus/chip8-test-suite) : pass ! 
+- [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
+- [ ] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : FAIL
+- [ ] [Flags test](https://github.com/Timendus/chip8-test-suite) : FAIL 
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite)
+- [ ] [Keypad test](https://github.com/Timendus/chip8-test-suite)
 - [ ] ...
  
 ![demo](./demo/demo.gif)
@@ -21,3 +24,4 @@ Sources:
 - https://www.includehelp.com/rust/reverse-bits-of-a-binary-number.aspx
 - https://github.com/trapexit/chip-8_documentation
 - https://www.freecodecamp.org/news/creating-your-very-own-chip-8-emulator/
+- https://github.com/Timendus/chip8-test-suite

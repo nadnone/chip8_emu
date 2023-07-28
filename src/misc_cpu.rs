@@ -134,12 +134,11 @@ impl MiscCPU {
         self.variables_register[x as usize] = nn;
     }
 
-    pub fn add_value_register_vx_7xnn(&mut self, x: u8, nn: u8)
+    pub fn inst_7xnn(&mut self, x: u8, nn: u8)
     {
-        let var = self.variables_register[x as usize];
+        let vx = self.variables_register[x as usize];
 
-        // on bloque au max d'un 8bit
-        self.variables_register[x as usize] = (var as u16 + nn as u16) as u8 % 255;
+        self.variables_register[x as usize] = (vx as u16 + nn as u16) as u8;
      
     }
 
