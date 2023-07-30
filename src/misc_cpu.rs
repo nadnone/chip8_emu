@@ -175,16 +175,16 @@ impl MiscCPU {
                 let vx = self.variables_register[x as usize];
                 let vy = self.variables_register[y as usize];
                 
-                self.variables_register[0xf] = 0;
-
+                self.variables_register[x as usize] = vx.wrapping_add(vy);
+               
                 if vx as u16 + vy as u16 > 0xff
                 {
                     // si overflow flag à 1
                     self.variables_register[0xf] = 1;
                 }
-
-                self.variables_register[x as usize] = vx.wrapping_add(vy);
-               
+                else {
+                    self.variables_register[0xf] = 0; 
+                }
 
             }
 
@@ -194,22 +194,28 @@ impl MiscCPU {
                 let vx = self.variables_register[x as usize]; 
                 let vy = self.variables_register[y as usize];
                 
-                self.variables_register[0xf] = 0;
+                self.variables_register[x as usize] = vx.wrapping_sub(vy);
 
                 if vx > vy
                 {
                     // si underflow flag à 1
                     self.variables_register[0xf] = 1;
                 }
-
-                self.variables_register[x as usize] = vx.wrapping_sub(vy);
-
+                else {
+                    self.variables_register[0xf] = 0;
+                }
 
             }
 
             0x6 => {
-                self.variables_register[0xf] = self.variables_register[x as usize] & 0x1; // last bit
-                self.variables_register[x as usize] >>= 1; // shift right
+
+                self.variables_register[x as usize] = self.variables_register[y as usize]; // set VX value VY
+                
+                let flag = self.variables_register[x as usize] & 0x1; // last bit before shift
+                
+                self.variables_register[x as usize] >>= 1; // right shift
+                
+                self.variables_register[0xf] = flag; // set flag at end, VX could be VF
             }
 
             0x7 => { // soustraction VY - VX
@@ -217,22 +223,27 @@ impl MiscCPU {
                 let vx = self.variables_register[x as usize]; 
                 let vy = self.variables_register[y as usize];
 
-                self.variables_register[0xf] = 0;
+                self.variables_register[x as usize] = vy.wrapping_sub(vx);
 
                 if vy > vx
                 {
                     // si underflow flag à 1
                     self.variables_register[0xf] = 1;
                 }
-
-                self.variables_register[x as usize] = vy.wrapping_sub(vx);
+                else {
+                    self.variables_register[0xf] = 0;
+                }
 
             }
 
             0xe => {
-                self.variables_register[0xf] = self.variables_register[x as usize] & 0x80; // most significant bit
+                self.variables_register[x as usize] = self.variables_register[y as usize]; // set VX value VY
+                
+                let flag = self.variables_register[x as usize].reverse_bits() & 0x1; // first bit before shift
 
-                self.variables_register[x as usize] <<= 1; // shift left
+                self.variables_register[x as usize] <<= 1; // left shift
+                
+                self.variables_register[0xf] = flag; // set flag at end, VX could be VF
             
             }
 

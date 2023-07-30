@@ -1,7 +1,7 @@
 use std::{fs::File, io::{Read, Seek}, time::Duration, process::exit};
 
-use sdl2::{render::Canvas, video::Window};
-use crate::{io_manager::IOManager, misc_cpu::MiscCPU, constants::TIMER_MAX_HZ};
+use sdl2::{render::Canvas, video::Window, EventPump};
+use crate::{io_manager::IOManager, misc_cpu::MiscCPU, constants::TIMER_MAX_HZ, inputs::Inputs};
 
 fn load_program(io_manager: &mut IOManager, filename: &str)
 {
@@ -110,8 +110,7 @@ fn decode(bytes: [u8; 2], io_manager: &mut IOManager, cpu_manager: &mut MiscCPU,
     }
 
 
-    //io_manager.get_ram_array(1118, 1120);
-    //cpu_manager.get_register_range_array(0, 0xf);
+    //cpu_manager._get_register_range_array(0xf, 0xf);
 
 
 }
@@ -124,7 +123,7 @@ fn fetch(io_manager: &mut IOManager, cpu_manager: &mut MiscCPU) -> [u8; 2]
     return word;
 }
 
-pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>)
+pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>, event_pump: &mut EventPump)
 {
     let mut cpu_manager = MiscCPU::initialize();
     let mut io_manager = IOManager::initialize();
@@ -135,16 +134,16 @@ pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>)
         return;
     }
 
-    println!("{:?}", argv[1]);
-
     load_program(&mut io_manager, argv[1].as_str());
 
     loop 
     {
+
+        Inputs::check(event_pump);
+
         let word = fetch(&mut io_manager, &mut cpu_manager);
 
         decode(word, &mut io_manager, &mut cpu_manager, canvas);
-
 
         
         canvas.present();

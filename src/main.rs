@@ -8,6 +8,7 @@ mod cpu_main;
 mod constants;
 mod io_manager;
 mod misc_cpu;
+mod inputs;
 
 pub fn main() {
 
@@ -27,7 +28,7 @@ pub fn main() {
     canvas.present();
 
 
-    let _event_pump = sdl_context.event_pump().unwrap();
+    let mut event_pump = sdl_context.event_pump().unwrap();
    
-    cpu_main::cpu_main(&mut canvas, env::args().collect());
+    cpu_main::cpu_main(&mut canvas, env::args().collect(), &mut event_pump);
 }

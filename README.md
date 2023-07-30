@@ -6,12 +6,14 @@
 - [x] [IBM Logo](https://github.com/Timendus/chip8-test-suite) : pass ! 
 - [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
 - [x] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : pass !
-- [ ] [Flags test](https://github.com/Timendus/chip8-test-suite) : FAIL 
-- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite)
+- [x] [Flags test](https://github.com/Timendus/chip8-test-suite) : pass !
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL 
 - [ ] [Keypad test](https://github.com/Timendus/chip8-test-suite)
 - [ ] ...
  
 - [ ] Windows events
+    - [x] Escape to quit
+    - [ ] ...
 
 ![demo](./demo/demo.gif)
 
