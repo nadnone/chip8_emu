@@ -67,8 +67,12 @@ impl IOManager {
         }
     }
 
-    pub fn clear_screen(&self, canvas: &mut Canvas<Window>)
+    pub fn clear_screen(&mut self, canvas: &mut Canvas<Window>)
     {
+        for i in 0..self.vga.len() {
+            self.vga[i as usize] = 0; // turn all pixels to 0
+        }
+
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
@@ -91,63 +95,56 @@ impl IOManager {
         // flag
         cpu_manager.set_values_register(0xf, 0); // on reset
 
-        
+    
 
-        for p_h in 0..n as u8 { // ligne de la sprite
+        for col in 0..n as u8 { // colonne de la sprite
             
-            let mut sprite = self.ram[cpu_manager.get_index_register() as usize + p_h as usize]; // informations concernant les pixels
+            let sprite = self.ram[cpu_manager.get_index_register() as usize + col as usize]; // informations concernant les pixels
 
-            for p_w in 0..8 as u8 { // chaque colonne fait 8 pixel
+            for row in 0..8 as u8 { // chaque ligne fait 8 pixel
 
-                if (sprite & 0x80) > 0 // si le premier bit à gauche = 1, on dessine ou écrase
+                let sprite_bit = (sprite << row).reverse_bits() & 0x1; // le premier bit à gauche 
+
+                if sprite_bit == 0 { // si 0 on continue, pas besoin d'agir
+                    continue;
+                };
+
+                // valeurs absolues
+                let mut x = vx + row;
+                let mut y = vy + col;
+
+                // limite d'écran
+                if x > DISPLAY.0 as u8
                 {
-
-                    // valeurs absolues
-                    let mut x = vx + p_w;
-                    let mut y = vy + p_h;
-    
-                    // limite d'écran
-                    if x > DISPLAY.0 as u8
-                    {
-                        x -= DISPLAY.0 as u8;
-                    }
-                    if y > DISPLAY.1 as u8
-                    {
-                        y -= DISPLAY.1 as u8;
-                    }
-    
-    
-                    let pixel_loc = (x as u16 + (y as u16 * DISPLAY.1 as u16)) as usize;
-    
-                    // si vga = 1 OR sprite = 1 alors on allume, sinon on éteint
-                    self.vga[ pixel_loc ] |= 1; // OR
-
-
-                    if self.vga[pixel_loc] == 1 // si pixel allumé
-                    {
-                        canvas.set_draw_color(Color::RGB(255, 255, 255));
-                        canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-                    }
-                    else // sinon forcément éteint
-                    {
-                        canvas.set_draw_color(Color::RGB(0, 0, 0));
-                        canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-
-                        cpu_manager.set_values_register(0xf, 1);
-
-                    }
-
+                    x -= DISPLAY.0 as u8;
+                }
+                if y > DISPLAY.1 as u8
+                {
+                    y -= DISPLAY.1 as u8;
                 }
 
 
+                let pixel_loc = (x as u16 + (y as u16 * DISPLAY.0 as u16)) as usize;
+                self.vga[pixel_loc] ^= 1;
 
-                sprite <<= 1; // on décale à gauche d'un bit (left shift)
+                if self.vga[pixel_loc] == 1
+                {
+                    canvas.set_draw_color(Color::RGB(255, 255, 255));
+                }
+                else
+                {
+                    canvas.set_draw_color(Color::RGB(0, 0, 0));
+                    cpu_manager.set_values_register(0xf, 1);
+                }
+                
+                canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
 
 
             } 
             
         }
 
+        canvas.present();
 
         
         
@@ -234,13 +231,13 @@ impl IOManager {
 
             0x00a => { // wait to get key 
                 
-                cpu_manager._set_wait_control(true);
+                cpu_manager.set_wait_control(true);
 
                 for i in 0..16
                 {
                     if Inputs::check_scancode(event, i)
                     {
-                        cpu_manager._set_wait_control(false);
+                        cpu_manager.set_wait_control(false);
                     }
                 }
 
@@ -264,7 +261,7 @@ impl IOManager {
 
             0x9e => {
                 // if vx key pressed 
-                if Inputs::is_keystate(event, true, vx as usize)
+                if Inputs::is_key_pressed(event, vx as usize)
                 {
                     cpu_manager.inc_pc();
                 }
@@ -273,7 +270,7 @@ impl IOManager {
             0xa1 => {
                
                 // if vx key not pressed 
-                if Inputs::is_keystate(event, false, vx as usize)
+                if !Inputs::is_key_pressed(event, vx as usize)
                 {
                     cpu_manager.inc_pc();
                 }

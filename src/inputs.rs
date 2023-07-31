@@ -22,23 +22,19 @@ impl Inputs {
 
     }
 
-    pub fn is_keystate(event: &mut EventPump, keystate: bool, key: usize) -> bool
+    pub fn is_key_pressed(event: &mut EventPump, key: usize) -> bool
     {
         for (keys, state) in event.keyboard_state().scancodes()
         {
-
-            if KEYS[key] == keys && state == keystate
+            if KEYS[key] == keys && state == true
             {
                 return true;
             }
-           
-
         }
 
         return false;
 
     }
-    
 
     pub fn check_scancode(event: &mut EventPump, vx: u8) -> bool
     {

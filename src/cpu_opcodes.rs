@@ -41,7 +41,7 @@ impl CPUOpcodes {
         println!("Register range data: {:?}", range);
     }
 
-    pub fn _set_wait_control(&mut self, state: bool)
+    pub fn set_wait_control(&mut self, state: bool)
     {
         self.wait = state;
     }
@@ -260,7 +260,7 @@ impl CPUOpcodes {
             0xe => {
                 self.variables_register[x as usize] = self.variables_register[y as usize]; // set VX value VY
                 
-                let flag = self.variables_register[x as usize].reverse_bits() & 0x1; // first bit before shift
+                let flag = self.variables_register[x as usize] & 0x80; // first bit before shift
 
                 self.variables_register[x as usize] <<= 1; // left shift
                 
@@ -294,6 +294,14 @@ impl CPUOpcodes {
     }
 
   
+    pub fn inst_cxnn(&mut self, bytes: u16)
+    {
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        
+        let random = rand::random::<u8>();
+
+        self.variables_register[x as usize] = random & (bytes & 0xff) as u8;
+    }
 
    
 

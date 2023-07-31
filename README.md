@@ -7,14 +7,18 @@
 - [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
 - [x] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [Flags test](https://github.com/Timendus/chip8-test-suite) : pass !
-- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL? 
-- [ ] [Keypad test](https://github.com/Timendus/chip8-test-suite) : FAIL (step 2 don't seem to work correctly)
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : pass?
+- [x] [Keypad test](https://github.com/Timendus/chip8-test-suite) : pass !
+- [x] [random number test](https://github.com/mattmikolay/chip-8/tree/master) : pass !
+- [ ] [delay timer test](https://github.com/mattmikolay/chip-8/tree/master) : FAIL
+
 - [ ] ...
+- [x] [Heart monitor ROM](https://github.com/mattmikolay/chip-8/tree/master) : pass !
  
 - [ ] Windows events
     - [x] Escape to quit
     - [x] Keypad Down
-    - [ ] Keypad Up
+    - [x] Keypad Up
     - [x] Get Key
  
 ![demo](./demo/demo.gif)

@@ -86,7 +86,9 @@ fn decode(bytes: u16, io_manager: &mut IOManager, cpu_manager: &mut CPUOpcodes, 
 
         0x9 => cpu_manager.inst_9xy0(bytes),
 
-        0xa => cpu_manager.inst_annn(bytes), 
+        0xa => cpu_manager.inst_annn(bytes),
+
+        0xc => cpu_manager.inst_cxnn(bytes),
 
         0xd => io_manager.display(bytes, canvas, cpu_manager),
 
@@ -159,10 +161,7 @@ pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>, event_pump: &mut
         }
 
         decode(word, &mut io_manager, &mut cpu_manager, canvas, event_pump);
-        
-        canvas.present();
     
-
 
         std::thread::sleep(DURATION_CPU);
 

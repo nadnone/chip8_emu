@@ -3,7 +3,6 @@ use std::env;
 use constants::DISPLAY;
 use sdl2; 
 use sdl2::pixels::Color;
-
 mod cpu_main;
 mod constants;
 mod io_manager;
