@@ -7,7 +7,7 @@ use sdl2::pixels::Color;
 mod cpu_main;
 mod constants;
 mod io_manager;
-mod misc_cpu;
+mod cpu_opcodes;
 mod inputs;
 
 pub fn main() {

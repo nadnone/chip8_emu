@@ -7,14 +7,16 @@
 - [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
 - [x] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [Flags test](https://github.com/Timendus/chip8-test-suite) : pass !
-- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL 
-- [ ] [Keypad test](https://github.com/Timendus/chip8-test-suite)
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL? 
+- [ ] [Keypad test](https://github.com/Timendus/chip8-test-suite) : FAIL (step 2 don't seem to work correctly)
 - [ ] ...
  
 - [ ] Windows events
     - [x] Escape to quit
-    - [ ] ...
-
+    - [x] Keypad Down
+    - [ ] Keypad Up
+    - [x] Get Key
+ 
 ![demo](./demo/demo.gif)
 
 Sources: 
@@ -30,3 +32,4 @@ Sources:
 - https://www.freecodecamp.org/news/creating-your-very-own-chip-8-emulator/
 - https://github.com/Timendus/chip8-test-suite
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy1
+- https://tonisagrista.com/blog/2021/chip8-spec/#timers

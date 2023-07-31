@@ -1,3 +1,6 @@
+use sdl2::keyboard::Scancode;
+use std::time::Duration;
+
 pub const RAM_SIZE_BYTES: usize = 4096; // 4 kBytes
 pub const DISPLAY: (usize, usize) = (64, 32);
 pub const REGISTER_SIZE: usize = 16;
@@ -26,5 +29,26 @@ pub const SPRITES_DATA: [u8; 80] = [
 
 
 pub const TIMER_MAX_HZ: u64 = 550; // fréquence d'horloge
+pub const DURATION_CPU: Duration = Duration::from_millis(TIMER_MAX_HZ / 1000);
 
 pub const PROGRAM_COUNTER_START_ADDR: u16 = 512;
+
+
+pub const KEYS: [Scancode; 16] = [
+    Scancode::Kp0,
+    Scancode::Kp1,
+    Scancode::Kp2,
+    Scancode::Kp3,
+    Scancode::Kp4,
+    Scancode::Kp5,
+    Scancode::Kp6,
+    Scancode::Kp7,
+    Scancode::Kp8,
+    Scancode::Kp9,
+    Scancode::A,
+    Scancode::B,
+    Scancode::C,
+    Scancode::D,
+    Scancode::E,
+    Scancode::F
+];

@@ -1,16 +1,16 @@
 use sdl2::{render::Canvas, video::Window};
 use sdl2::pixels::Color;
-use sdl2::rect::*;
+use sdl2::{rect::*, EventPump};
 
 use crate::constants::*;
-use crate::misc_cpu::MiscCPU;
+use crate::cpu_opcodes::CPUOpcodes;
+use crate::inputs::Inputs;
 
 pub struct IOManager {
     ram: [u8; RAM_SIZE_BYTES],
     vga: [u8; DISPLAY.0 * DISPLAY.1],
     delay_timer: u8,
     sound_timer: u8,
-
 }
 
 impl IOManager {
@@ -31,7 +31,7 @@ impl IOManager {
             ram: ram_tmp,
             vga: [0; DISPLAY.0 * DISPLAY.1],
             delay_timer: 0,
-            sound_timer: 0
+            sound_timer: 0,
         }
 
     }
@@ -46,6 +46,27 @@ impl IOManager {
         println!("RAM range data: {:?}", range);
     }
 
+    pub fn dec_delay_timer(&mut self)
+    {
+        if self.delay_timer > 0
+        {
+            self.delay_timer -= 1;
+        }
+    }
+
+    pub fn _dec_sound_timer(&mut self)
+    {
+        if self.delay_timer > 0
+        {
+            self.delay_timer -= 1;
+        }
+        else
+        {    
+            // must beep
+
+        }
+    }
+
     pub fn clear_screen(&self, canvas: &mut Canvas<Window>)
     {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -53,15 +74,15 @@ impl IOManager {
 
     }
 
-    pub fn display(&mut self, bytes: [u8; 2], canvas: &mut Canvas<Window>, cpu_manager: &mut MiscCPU)
+    pub fn display(&mut self, bytes: u16, canvas: &mut Canvas<Window>, cpu_manager: &mut CPUOpcodes)
     {
 
         // les indexes de registre
-        let vx_i = bytes[0] & 0x0f;
-        let vy_i = (bytes[1] & 0xf0) >> 4; // right shift
+        let vx_i = (bytes & 0xf00) >> 8; 
+        let vy_i = (bytes & 0xf0) >> 4;
 
         // le nombre de sprites
-        let n = bytes[1] & 0x0f;
+        let n = bytes & 0xf;
 
         // les positions
         let vx = cpu_manager.get_values_register(vx_i as usize) % DISPLAY.0 as u8;
@@ -146,11 +167,11 @@ impl IOManager {
     }
 
 
-    pub fn inst_fx_xx(&mut self, cpu_manager: &mut MiscCPU, bytes: [u8; 2])
+    pub fn inst_fx_xx(&mut self, cpu_manager: &mut CPUOpcodes, bytes: u16, event: &mut EventPump)
     {
-        let x = bytes[0] & 0x0f;
+        let x = ((bytes & 0xf00) >> 8) as u8;
 
-        match bytes[1] {
+        match bytes & 0xff {
             
             0x07 => cpu_manager.set_values_register(x as usize, self.delay_timer),
 
@@ -211,12 +232,56 @@ impl IOManager {
                 }
             }
 
+            0x00a => { // wait to get key 
+                
+                cpu_manager._set_wait_control(true);
+
+                for i in 0..16
+                {
+                    if Inputs::check_scancode(event, i)
+                    {
+                        cpu_manager._set_wait_control(false);
+                    }
+                }
+
+
+            }
+
            
-            _ => println!("[!] exception sub-opcode (io_manager.rs):  {:x}", bytes[1])
+            _ => println!("[!] exception sub-opcode (io_manager.rs):FX:  {:x}", bytes)
         }
 
    
     }
 
+    pub fn ex_skip_key(&self, bytes: u16, cpu_manager: &mut CPUOpcodes, event: &mut EventPump)
+    {
+        let x = ((bytes & 0xf00) >> 8) as u8;
+
+        let vx = cpu_manager.get_values_register(x as usize);
+
+        match bytes & 0xff {
+
+            0x9e => {
+                // if vx key pressed 
+                if Inputs::is_keystate(event, true, vx as usize)
+                {
+                    cpu_manager.inc_pc();
+                }
+            }
+
+            0xa1 => {
+               
+                // if vx key not pressed 
+                if Inputs::is_keystate(event, false, vx as usize)
+                {
+                    cpu_manager.inc_pc();
+                }
+            }
+            
+            _ => println!("[!] exception sub-opcode (io_manager.rs):EX:  {:x}", bytes)
+        }
+
+    }
 
 }

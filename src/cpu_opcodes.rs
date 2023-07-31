@@ -1,15 +1,16 @@
 use crate::constants::*;
 
-pub struct MiscCPU {
+pub struct CPUOpcodes {
     stack: Vec<u16>,
     program_counter: u16,
     index_register: u16,
     variables_register: [u8; REGISTER_SIZE],
+    wait: bool,
 }
 
-impl MiscCPU {
+impl CPUOpcodes {
 
-    pub fn initialize() -> MiscCPU
+    pub fn initialize() -> CPUOpcodes
     {
 
         // on charges les FONTS SPRITES 
@@ -20,11 +21,12 @@ impl MiscCPU {
         }
 
 
-        return MiscCPU {
+        return CPUOpcodes {
             program_counter: PROGRAM_COUNTER_START_ADDR,
             index_register: 0,
             variables_register: [0; REGISTER_SIZE],
             stack: vec![],
+            wait: false,
         }
 
     }
@@ -37,6 +39,16 @@ impl MiscCPU {
         }
         
         println!("Register range data: {:?}", range);
+    }
+
+    pub fn _set_wait_control(&mut self, state: bool)
+    {
+        self.wait = state;
+    }
+
+    pub fn get_wait_control(&self) -> bool
+    {
+        return self.wait;
     }
 
     pub fn set_values_register(&mut self, x: usize, var: u8)
@@ -59,11 +71,10 @@ impl MiscCPU {
         return self.index_register;
     }
 
-    pub fn inst_1nnn(&mut self, bytes: [u8; 2])
+    pub fn inst_1nnn(&mut self, bytes: u16)
     {
-        let shifted = ((bytes[0] & 0x0f) as u16) << 8;
-
-        self.set_pc(shifted | bytes[1] as u16);
+        // jump to nnn
+        self.set_pc(bytes & 0xfff);
 
     }
 
@@ -82,23 +93,23 @@ impl MiscCPU {
         return self.program_counter;
     }
 
-    pub fn inst_2nnn(&mut self, nnn: [u8; 2])
+    pub fn inst_2nnn(&mut self, bytes: u16)
     {
-
-        // on récupère le nouveau PC
-        let first = ((nnn[0] & 0x0f) as u16) << 8;
-        let secnd = nnn[1] as u16;
 
         // on push to stack
         self.stack.push(self.get_pc());
 
         //on change le pc à nnn
-        self.set_pc(first | secnd);
+        self.set_pc(bytes & 0xfff);
 
     }
 
-    pub fn inst_3xnn(&mut self, x: u8, nn: u8)
+    pub fn inst_3xnn(&mut self, bytes: u16)
     {
+
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let nn = (bytes & 0xff) as u8;
+
         if self.variables_register[x as usize] == nn // if VX == NN
         {  
             // skip instruction
@@ -121,8 +132,12 @@ impl MiscCPU {
 
     }
 
-    pub fn inst_4xnn(&mut self, x: u8, nn: u8)
+    pub fn inst_4xnn(&mut self, bytes: u16)
     {
+
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let nn = (bytes & 0xff) as u8;
+
         if self.variables_register[x as usize] != nn // if VX != NN
         {  
             // skip instruction
@@ -130,10 +145,10 @@ impl MiscCPU {
         }
     }
 
-    pub fn inst_5xy0(&mut self, bytes: [u8; 2])
+    pub fn inst_5xy0(&mut self, bytes: u16)
     {
-        let x = bytes[0] & 0x0f;
-        let y = (bytes[1] & 0xf0) >> 4;
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let y = ((bytes & 0xf0) >> 4) as u8;
 
         if self.variables_register[x as usize] == self.variables_register[y as usize] // VX == VY
         {
@@ -141,24 +156,30 @@ impl MiscCPU {
         }
     }
 
-    pub fn inst_6xnn(&mut self, x: u8, nn: u8)
+    pub fn inst_6xnn(&mut self, bytes: u16)
     {
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let nn = (bytes & 0xff) as u8;
+
         self.variables_register[x as usize] = nn;
     }
 
-    pub fn inst_7xnn(&mut self, x: u8, nn: u8)
+    pub fn inst_7xnn(&mut self, bytes: u16)
     {
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let nn = (bytes & 0xff) as u8;
+
         let vx = self.variables_register[x as usize];
 
         self.variables_register[x as usize] = vx.wrapping_add(nn);
      
     }
 
-    pub fn inst_8xy_x(&mut self, bytes: [u8; 2])
+    pub fn inst_8xy_x(&mut self, bytes: u16)
     {
-        let x = bytes[0] & 0x0f;
-        let y = (bytes[1] & 0xf0) >> 4;
-        let last = bytes[1] & 0x0f;
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let y = ((bytes & 0xf0) >> 4) as u8;
+        let last = bytes & 0xf;
 
         match last {
             
@@ -254,10 +275,10 @@ impl MiscCPU {
    
     }
     
-    pub fn inst_9xy0(&mut self, bytes: [u8; 2])
+    pub fn inst_9xy0(&mut self, bytes: u16)
     {
-        let x = bytes[0] & 0x0f;
-        let y = (bytes[1] & 0xf0) >> 4;
+        let x = ((bytes & 0xf00) >> 8) as u8;
+        let y = (bytes & 0xf0) >> 4 as u8;
 
         if self.variables_register[x as usize] != self.variables_register[y as usize] // VX != VY
         {
@@ -265,10 +286,9 @@ impl MiscCPU {
         }
     }
 
-    pub fn inst_annn(&mut self, bytes: [u8; 2])
+    pub fn inst_annn(&mut self, bytes: u16)
     {
-        let mut nnn = (bytes[0] as u16) << 8 | bytes[1] as u16;
-        nnn &= 0xfff;
+        let nnn = bytes & 0xfff;
 
         self.index_register = nnn;
     }
