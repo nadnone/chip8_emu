@@ -2,6 +2,7 @@ use sdl2::{render::Canvas, video::Window};
 use sdl2::pixels::Color;
 use sdl2::{rect::*, EventPump};
 
+use crate::beep::Beeper;
 use crate::constants::*;
 use crate::cpu_opcodes::CPUOpcodes;
 use crate::inputs::Inputs;
@@ -54,16 +55,17 @@ impl IOManager {
         }
     }
 
-    pub fn _dec_sound_timer(&mut self)
+    pub fn sound_timer_check(&mut self, beeper: &mut Beeper)
     {
-        if self.delay_timer > 0
+        if self.sound_timer > 0
         {
-            self.delay_timer -= 1;
+           beeper.play();
+           self.sound_timer -= 1;
+
         }
         else
-        {    
-            // must beep
-
+        { 
+            beeper.stop();            
         }
     }
 
@@ -235,7 +237,7 @@ impl IOManager {
 
                 for i in 0..16
                 {
-                    if Inputs::check_scancode(event, i)
+                    if Inputs::is_key_pressed(event, i)
                     {
                         cpu_manager.set_wait_control(false);
                     }

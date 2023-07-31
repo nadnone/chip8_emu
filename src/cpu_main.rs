@@ -1,7 +1,7 @@
-use std::{fs::File, io::{Read, Seek}, process::exit};
+use std::{fs::File, io::{Read, Seek}, process::exit, time::{SystemTime, Duration}};
 
-use sdl2::{render::Canvas, video::Window, EventPump};
-use crate::{io_manager::IOManager, cpu_opcodes::CPUOpcodes, constants::DURATION_CPU, inputs::Inputs};
+use sdl2::{render::Canvas, video::Window, EventPump, AudioSubsystem};
+use crate::{io_manager::IOManager, cpu_opcodes::CPUOpcodes, constants::CPU_FREQ, inputs::Inputs, beep::Beeper};
 
 fn load_program(io_manager: &mut IOManager, filename: &str)
 {
@@ -131,10 +131,11 @@ fn fetch(io_manager: &mut IOManager, cpu_manager: &mut CPUOpcodes) -> u16
     return word;
 }
 
-pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>, event_pump: &mut EventPump)
+pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>, event_pump: &mut EventPump, audio_subsystem: &AudioSubsystem)
 {
     let mut cpu_manager = CPUOpcodes::initialize();
     let mut io_manager = IOManager::initialize();
+    let mut beeper = Beeper::init(audio_subsystem);
 
     if argv.len() < 1
     {
@@ -145,25 +146,36 @@ pub fn cpu_main(canvas: &mut Canvas<Window>, argv: Vec<String>, event_pump: &mut
     load_program(&mut io_manager, argv[1].as_str());
 
     let mut word: u16 = 0;
+    
+    let mut delta_time = 0;
 
     loop 
     {
+        let time_0: SystemTime = SystemTime::now();
 
         Inputs::check(event_pump);
+
 
         if !cpu_manager.get_wait_control() // if it is on pause
         {
             word = fetch(&mut io_manager, &mut cpu_manager);
         }
-        else 
-        {
-            io_manager.dec_delay_timer();
-        }
+        
+
+        io_manager.sound_timer_check(&mut beeper);
 
         decode(word, &mut io_manager, &mut cpu_manager, canvas, event_pump);
     
 
-        std::thread::sleep(DURATION_CPU);
+        if delta_time >= CPU_FREQ
+        {
+            io_manager.dec_delay_timer();
+            delta_time = 0;
+        }
+
+        delta_time += time_0.elapsed().unwrap().as_millis() as u16 + CPU_FREQ;
+
+        std::thread::sleep(Duration::from_secs_f32(1. / CPU_FREQ as f32));
 
     }
 

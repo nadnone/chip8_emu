@@ -36,15 +36,4 @@ impl Inputs {
 
     }
 
-    pub fn check_scancode(event: &mut EventPump, vx: u8) -> bool
-    {
-        let key_state = event.keyboard_state();
-
-        if key_state.is_scancode_pressed(KEYS[vx as usize])
-        {
-            return true;
-        }
-        
-        return false;
-    }
 }

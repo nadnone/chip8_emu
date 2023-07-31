@@ -14,12 +14,14 @@
 
 - [ ] ...
 - [x] [Heart monitor ROM](https://github.com/mattmikolay/chip-8/tree/master) : pass !
+- [ ] [Tetris ROM](https://github.com/badlogic/chip8/tree/master) : Bug :(
  
 - [ ] Windows events
     - [x] Escape to quit
     - [x] Keypad Down
     - [x] Keypad Up
     - [x] Get Key
+    - [x] Beep speaker
  
 ![demo](./demo/demo.gif)
 
@@ -37,3 +39,4 @@ Sources:
 - https://github.com/Timendus/chip8-test-suite
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy1
 - https://tonisagrista.com/blog/2021/chip8-spec/#timers
+- https://www.instructables.com/CHIP-8-Computer/

@@ -8,12 +8,14 @@ mod constants;
 mod io_manager;
 mod cpu_opcodes;
 mod inputs;
+mod beep;
 
 pub fn main() {
 
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+    let audio_subsystem = sdl_context.audio().unwrap();
  
     let window = video_subsystem.window("chip8 emulator", DISPLAY.0 as u32 * 10, DISPLAY.1 as u32* 10)
         .position_centered()
@@ -29,5 +31,5 @@ pub fn main() {
 
     let mut event_pump = sdl_context.event_pump().unwrap();
    
-    cpu_main::cpu_main(&mut canvas, env::args().collect(), &mut event_pump);
+    cpu_main::cpu_main(&mut canvas, env::args().collect(), &mut event_pump, &audio_subsystem);
 }
