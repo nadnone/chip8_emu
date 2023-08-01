@@ -1,6 +1,7 @@
 
 use sdl2::{audio::{AudioCallback, AudioSpecDesired, AudioDevice}, AudioSubsystem};
 
+
 // https://docs.rs/sdl2/latest/sdl2/audio/index.html
 
 struct SquareWave {
@@ -26,7 +27,7 @@ impl AudioCallback for SquareWave {
 }
 
 pub struct Beeper {
-    device: AudioDevice<SquareWave>
+    device: AudioDevice<SquareWave>,
 }
 
 impl Beeper 
@@ -42,18 +43,18 @@ impl Beeper
         let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
         
             SquareWave {
-                phase_inc: 440.0 / spec.freq as f32,
-                phase: 0.0,
+                phase_inc: 440. / spec.freq as f32,
+                phase: 0.,
                 volume: 0.25
             }
         }).unwrap();
 
 
         return Beeper { 
-            device: device
+            device: device,
         }
     }
-    
+
     pub fn play(&mut self)
     {
         self.device.resume();
@@ -64,6 +65,26 @@ impl Beeper
         self.device.pause();
     }
   
+    pub fn change_freq(&mut self, freq: i32, pitch: f32)
+    {
+
+        let desired_spec = AudioSpecDesired {
+            freq: Some(freq),
+            channels: Some(1),  
+            samples: None   
+        };
+
+        self.device = self.device.subsystem().open_playback(None, &desired_spec, |spec| {
+        
+            SquareWave {
+                phase_inc: pitch / spec.freq as f32,
+                phase: 0.,
+                volume: 0.25
+            }
+        }).unwrap();
+
+    }
+
     
 }
 

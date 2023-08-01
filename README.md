@@ -7,21 +7,23 @@
 - [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
 - [x] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [Flags test](https://github.com/Timendus/chip8-test-suite) : pass !
-- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : pass?
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL 
 - [x] [Keypad test](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [random number test](https://github.com/mattmikolay/chip-8/tree/master) : pass !
 - [ ] [delay timer test](https://github.com/mattmikolay/chip-8/tree/master) : FAIL
 
 - [ ] ...
 - [x] [Heart monitor ROM](https://github.com/mattmikolay/chip-8/tree/master) : pass !
-- [ ] [Tetris ROM](https://github.com/badlogic/chip8/tree/master) : Bug :(
- 
+- [x] [Tetris ROM](https://github.com/badlogic/chip8/tree/master) : Should be Ok
+- [x] [Morse Demo](https://github.com/mattmikolay/chip-8/tree/master) : pass !
+
 - [ ] Windows events
     - [x] Escape to quit
     - [x] Keypad Down
     - [x] Keypad Up
     - [x] Get Key
     - [x] Beep speaker
+
  
 ![demo](./demo/demo.gif)
 
@@ -40,3 +42,6 @@ Sources:
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy1
 - https://tonisagrista.com/blog/2021/chip8-spec/#timers
 - https://www.instructables.com/CHIP-8-Computer/
+
+XO-CHIP8 Instructions:
+- http://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html

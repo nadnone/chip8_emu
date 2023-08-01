@@ -26,8 +26,8 @@ pub const SPRITES_DATA: [u8; 80] = [
 
 ];
 
-
-pub const CPU_FREQ: u16 = 600; // fréquence d'horloge
+pub const TIMER_FREQ: f32 = 1. / 60.;
+pub const CPU_FREQ: f32 = 1. / 2000.; // fréquence d'horloge
 
 pub const PROGRAM_COUNTER_START_ADDR: u16 = 512;
 

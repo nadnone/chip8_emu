@@ -4,7 +4,7 @@ pub struct CPUOpcodes {
     stack: Vec<u16>,
     program_counter: u16,
     index_register: u16,
-    variables_register: [u8; REGISTER_SIZE],
+    pub variables_register: [u8; REGISTER_SIZE],
     wait: bool,
 }
 
@@ -49,16 +49,6 @@ impl CPUOpcodes {
     pub fn get_wait_control(&self) -> bool
     {
         return self.wait;
-    }
-
-    pub fn set_values_register(&mut self, x: usize, var: u8)
-    {
-        self.variables_register[x] = var;
-    }
-
-    pub fn get_values_register(&self, x: usize) -> u8
-    {
-        return self.variables_register[x];
     }
 
     pub fn set_index_register(&mut self, var: u16)

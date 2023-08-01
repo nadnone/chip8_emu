@@ -1,23 +1,25 @@
 use sdl2::{render::Canvas, video::Window};
 use sdl2::pixels::Color;
-use sdl2::{rect::*, EventPump};
+use sdl2::{rect::*, EventPump, AudioSubsystem};
 
 use crate::beep::Beeper;
-use crate::constants::*;
+use crate::{constants::*, xo_chip_extended};
 use crate::cpu_opcodes::CPUOpcodes;
 use crate::inputs::Inputs;
 
 pub struct IOManager {
-    ram: [u8; RAM_SIZE_BYTES],
+    pub ram: [u8; RAM_SIZE_BYTES],
     vga: [bool; DISPLAY.0 * DISPLAY.1],
     delay_timer: u8,
     sound_timer: u8,
+    pub audio_pattern_buffer: u16,
+    pub beeper: Beeper,
 }
 
 impl IOManager {
 
 
-    pub fn initialize() -> IOManager
+    pub fn initialize(audio_subsys: &AudioSubsystem) -> IOManager
     {
 
         // on charges les FONTS SPRITES 
@@ -33,6 +35,8 @@ impl IOManager {
             vga: [false; DISPLAY.0 * DISPLAY.1],
             delay_timer: 0,
             sound_timer: 0,
+            audio_pattern_buffer: 0,
+            beeper: Beeper::init(audio_subsys),
         }
 
     }
@@ -55,17 +59,18 @@ impl IOManager {
         }
     }
 
-    pub fn sound_timer_check(&mut self, beeper: &mut Beeper)
+    pub fn sound_timer_check(&mut self)
     {
+        
         if self.sound_timer > 0
         {
-           beeper.play();
-           self.sound_timer -= 1;
+            self.beeper.play();
+            self.sound_timer -= 1;
 
         }
         else
-        { 
-            beeper.stop();            
+        {
+            self.beeper.stop();            
         }
     }
 
@@ -91,11 +96,11 @@ impl IOManager {
         let n = bytes & 0xf;
 
         // les positions
-        let vx = cpu_manager.get_values_register(vx_i as usize) % DISPLAY.0 as u8;
-        let vy = cpu_manager.get_values_register(vy_i as usize) % DISPLAY.1 as u8;
+        let vx = cpu_manager.variables_register[vx_i as usize] % DISPLAY.0 as u8;
+        let vy = cpu_manager.variables_register[vy_i as usize] % DISPLAY.1 as u8;
 
         // flag
-        cpu_manager.set_values_register(0xf, 0); // on reset
+        cpu_manager.variables_register[0xf] =  0; // on reset
 
     
 
@@ -127,6 +132,12 @@ impl IOManager {
 
 
                 let pixel_loc = (x as u16 + (y as u16 * DISPLAY.0 as u16)) as usize;
+
+                if pixel_loc >= self.vga.len()
+                {
+                    return;
+                }
+
                 self.vga[pixel_loc] ^= true;
 
                 if self.vga[pixel_loc] == true
@@ -136,7 +147,7 @@ impl IOManager {
                 else
                 {
                     canvas.set_draw_color(Color::RGB(0, 0, 0));
-                    cpu_manager.set_values_register(0xf, 1);
+                    cpu_manager.variables_register[0xf] = 1;
                 }
                 
                 canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
@@ -155,6 +166,11 @@ impl IOManager {
 
     pub fn get_from_ram(&self, i: u16) -> [u8; 2]
     {
+        if i + 1 > self.ram.len() as u16
+        {
+            return [0,0];
+        }
+
         return [self.ram[i as usize], self.ram[i as usize + 1]];
     }
 
@@ -172,22 +188,39 @@ impl IOManager {
 
         match bytes & 0xff {
             
-            0x07 => cpu_manager.set_values_register(x as usize, self.delay_timer),
+            /*
+                XO-CHIP Extension http://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html
 
-            0x15 => self.delay_timer = cpu_manager.get_values_register(x as usize),
+             */
 
-            0x18 => self.sound_timer = cpu_manager.get_values_register(x as usize),
+            0x02 => xo_chip_extended::inst_f002(cpu_manager, self),
+            
+
+            0x3a => xo_chip_extended::inst_fn3a(self, &cpu_manager, x),
+
+
+            /*
+                **************************************************************************************
+             */
+
+
+
+            0x07 => cpu_manager.variables_register[x as usize] = self.delay_timer,
+
+            0x15 => self.delay_timer = cpu_manager.variables_register[x as usize],
+
+            0x18 => self.sound_timer = cpu_manager.variables_register[x as usize],
 
             0x1e => {
                 let i = cpu_manager.get_index_register();
-                let vx = cpu_manager.get_values_register(x as usize) as u16;
+                let vx = cpu_manager.variables_register[x as usize] as u16;
 
                 cpu_manager.set_index_register(i.wrapping_add(vx));
 
             }
 
             0x29 => {
-                let vx = cpu_manager.get_values_register(x as usize);
+                let vx = cpu_manager.variables_register[x as usize];
 
                 cpu_manager.set_index_register( vx as u16 * 5 ); // vx * 5 car chaque sprit fait 5 bytes de long
             }
@@ -195,7 +228,7 @@ impl IOManager {
             0x33 => {
 
 
-                let vx = cpu_manager.get_values_register(x as usize);
+                let vx = cpu_manager.variables_register[x as usize];
 
                 let first = vx / 100;
                 let middle = (vx % 100 ) / 10;
@@ -215,7 +248,7 @@ impl IOManager {
 
                 for v_i in 0..=(x as u16) {
                     
-                    self.ram[(v_i + i) as usize] = cpu_manager.get_values_register(v_i as usize);
+                    self.ram[(v_i + i) as usize] = cpu_manager.variables_register[v_i as usize];
 
                 }
 
@@ -227,7 +260,7 @@ impl IOManager {
 
                 for v_i in 0..=(x as u16) {
 
-                    cpu_manager.set_values_register(v_i as usize, self.ram[(v_i + i) as usize]);
+                    cpu_manager.variables_register[v_i as usize] = self.ram[(v_i + i) as usize];
                 }
             }
 
@@ -257,7 +290,7 @@ impl IOManager {
     {
         let x = ((bytes & 0xf00) >> 8) as u8;
 
-        let vx = cpu_manager.get_values_register(x as usize);
+        let vx = cpu_manager.variables_register[x as usize];
 
         match bytes & 0xff {
 
