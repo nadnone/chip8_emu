@@ -9,7 +9,7 @@ use crate::inputs::Inputs;
 
 pub struct IOManager {
     ram: [u8; RAM_SIZE_BYTES],
-    vga: [u8; DISPLAY.0 * DISPLAY.1],
+    vga: [bool; DISPLAY.0 * DISPLAY.1],
     delay_timer: u8,
     sound_timer: u8,
 }
@@ -30,7 +30,7 @@ impl IOManager {
 
         return IOManager {
             ram: ram_tmp,
-            vga: [0; DISPLAY.0 * DISPLAY.1],
+            vga: [false; DISPLAY.0 * DISPLAY.1],
             delay_timer: 0,
             sound_timer: 0,
         }
@@ -72,7 +72,7 @@ impl IOManager {
     pub fn clear_screen(&mut self, canvas: &mut Canvas<Window>)
     {
         for i in 0..self.vga.len() {
-            self.vga[i as usize] = 0; // turn all pixels to 0
+            self.vga[i as usize] = false; // turn all pixels to 0
         }
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -127,9 +127,9 @@ impl IOManager {
 
 
                 let pixel_loc = (x as u16 + (y as u16 * DISPLAY.0 as u16)) as usize;
-                self.vga[pixel_loc] ^= 1;
+                self.vga[pixel_loc] ^= true;
 
-                if self.vga[pixel_loc] == 1
+                if self.vga[pixel_loc] == true
                 {
                     canvas.set_draw_color(Color::RGB(255, 255, 255));
                 }
