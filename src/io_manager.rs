@@ -2,7 +2,7 @@ use sdl2::{render::Canvas, video::Window};
 use sdl2::pixels::Color;
 use sdl2::{rect::*, EventPump, AudioSubsystem};
 
-use crate::beep::Beeper;
+use crate::buzzer::Buzzer;
 use crate::{constants::*, xo_chip_extended};
 use crate::cpu_opcodes::CPUOpcodes;
 use crate::inputs::Inputs;
@@ -13,7 +13,7 @@ pub struct IOManager {
     delay_timer: u8,
     sound_timer: u8,
     pub audio_pattern_buffer: u16,
-    pub beeper: Beeper,
+    pub beeper: Buzzer,
 }
 
 impl IOManager {
@@ -36,7 +36,7 @@ impl IOManager {
             delay_timer: 0,
             sound_timer: 0,
             audio_pattern_buffer: 0,
-            beeper: Beeper::init(audio_subsys),
+            beeper: Buzzer::init(audio_subsys),
         }
 
     }
@@ -96,8 +96,8 @@ impl IOManager {
         let n = bytes & 0xf;
 
         // les positions
-        let vx = cpu_manager.variables_register[vx_i as usize] % DISPLAY.0 as u8;
-        let vy = cpu_manager.variables_register[vy_i as usize] % DISPLAY.1 as u8;
+        let vx = cpu_manager.variables_register[vx_i as usize] as u8;
+        let vy = cpu_manager.variables_register[vy_i as usize] as u8;
 
         // flag
         cpu_manager.variables_register[0xf] =  0; // on reset
@@ -106,7 +106,7 @@ impl IOManager {
 
         for col in 0..n as u8 { // colonne de la sprite
             
-            let sprite = self.ram[cpu_manager.get_index_register() as usize + col as usize]; // informations concernant les pixels
+            let sprite = self.ram[cpu_manager.index_register as usize + col as usize]; // informations concernant les pixels
 
             for row in 0..8 as u8 { // chaque ligne fait 8 pixel
 
@@ -117,26 +117,10 @@ impl IOManager {
                 };
 
                 // valeurs absolues
-                let mut x = vx + row;
-                let mut y = vy + col;
-
-                // limite d'écran
-                if x > DISPLAY.0 as u8
-                {
-                    x -= DISPLAY.0 as u8;
-                }
-                if y > DISPLAY.1 as u8
-                {
-                    y -= DISPLAY.1 as u8;
-                }
-
+                let x = (vx + row) % DISPLAY.0 as u8;
+                let y = (vy + col) % DISPLAY.1 as u8;
 
                 let pixel_loc = (x as u16 + (y as u16 * DISPLAY.0 as u16)) as usize;
-
-                if pixel_loc >= self.vga.len()
-                {
-                    return;
-                }
 
                 self.vga[pixel_loc] ^= true;
 
@@ -212,17 +196,17 @@ impl IOManager {
             0x18 => self.sound_timer = cpu_manager.variables_register[x as usize],
 
             0x1e => {
-                let i = cpu_manager.get_index_register();
+                let i = cpu_manager.index_register;
                 let vx = cpu_manager.variables_register[x as usize] as u16;
 
-                cpu_manager.set_index_register(i.wrapping_add(vx));
+                cpu_manager.index_register = i.wrapping_add(vx);
 
             }
 
             0x29 => {
                 let vx = cpu_manager.variables_register[x as usize];
 
-                cpu_manager.set_index_register( vx as u16 * 5 ); // vx * 5 car chaque sprit fait 5 bytes de long
+                cpu_manager.index_register =  vx as u16 * 5; // vx * 5 car chaque sprit fait 5 bytes de long
             }
 
             0x33 => {
@@ -234,7 +218,7 @@ impl IOManager {
                 let middle = (vx % 100 ) / 10;
                 let last = vx % 10;
 
-                let i = cpu_manager.get_index_register();
+                let i = cpu_manager.index_register;
 
                 self.ram[i as usize + 0] = first;
                 self.ram[i as usize + 1] = middle;
@@ -244,11 +228,12 @@ impl IOManager {
 
             0x55 => { // save register to memory
 
-                let i = cpu_manager.get_index_register();
+                let i = cpu_manager.index_register;
 
                 for v_i in 0..=(x as u16) {
                     
                     self.ram[(v_i + i) as usize] = cpu_manager.variables_register[v_i as usize];
+                    cpu_manager.index_register += 1;
 
                 }
 
@@ -256,11 +241,13 @@ impl IOManager {
 
             0x65 => { // load register from memory
 
-                let i = cpu_manager.get_index_register();
+                let i = cpu_manager.index_register;
 
                 for v_i in 0..=(x as u16) {
 
                     cpu_manager.variables_register[v_i as usize] = self.ram[(v_i + i) as usize];
+                    cpu_manager.index_register += 1;
+
                 }
             }
 

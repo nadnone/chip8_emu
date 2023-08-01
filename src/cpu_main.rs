@@ -88,6 +88,8 @@ fn decode(bytes: u16, io_manager: &mut IOManager, cpu_manager: &mut CPUOpcodes, 
 
         0xa => cpu_manager.inst_annn(bytes),
 
+        0xb => cpu_manager.inst_bnnn(bytes),
+
         0xc => cpu_manager.inst_cxnn(bytes),
 
         0xd => io_manager.display(bytes, canvas, cpu_manager),

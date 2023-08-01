@@ -3,7 +3,7 @@ use crate::constants::*;
 pub struct CPUOpcodes {
     stack: Vec<u16>,
     program_counter: u16,
-    index_register: u16,
+    pub index_register: u16,
     pub variables_register: [u8; REGISTER_SIZE],
     wait: bool,
 }
@@ -49,16 +49,6 @@ impl CPUOpcodes {
     pub fn get_wait_control(&self) -> bool
     {
         return self.wait;
-    }
-
-    pub fn set_index_register(&mut self, var: u16)
-    {
-        self.index_register = var;
-    }
-
-    pub fn get_index_register(&self) -> u16
-    {
-        return self.index_register;
     }
 
     pub fn inst_1nnn(&mut self, bytes: u16)
@@ -175,11 +165,20 @@ impl CPUOpcodes {
             
             0x0 => self.variables_register[x as usize] = self.variables_register[y as usize],
 
-            0x1 => self.variables_register[x as usize] |= self.variables_register[y as usize], // OR bitwise
+            0x1 => {
+                self.variables_register[x as usize] |= self.variables_register[y as usize]; // OR bitwise
+                self.variables_register[0xf] = 0;
+            }
 
-            0x2 => self.variables_register[x as usize] &= self.variables_register[y as usize], // AND bitwise
+            0x2 => {
+                self.variables_register[x as usize] &= self.variables_register[y as usize]; // AND bitwise
+                self.variables_register[0xf] = 0;
+            }
             
-            0x3 => self.variables_register[x as usize] ^= self.variables_register[y as usize], // XOR bitwise
+            0x3 => {
+                self.variables_register[x as usize] ^= self.variables_register[y as usize]; // XOR bitwise
+                self.variables_register[0xf] = 0;
+            }
             
             0x4 => { // addition
 
@@ -283,6 +282,11 @@ impl CPUOpcodes {
         self.index_register = nnn;
     }
 
+    pub fn inst_bnnn(&mut self, bytes: u16)
+    {
+        // COSMAC VIP VERSION
+        self.set_pc((bytes & 0xfff) + self.variables_register[0] as u16 );
+    }
   
     pub fn inst_cxnn(&mut self, bytes: u16)
     {

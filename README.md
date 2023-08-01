@@ -1,28 +1,30 @@
 # This is just an other Chip-8 Emulator
-## Still in development
 
-- In progress...
+## In progress... (But now playable)
 
 - [x] [IBM Logo](https://github.com/Timendus/chip8-test-suite) : pass ! 
 - [x] [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) : pass !
 - [x] [corax+ test opcodes](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [Flags test](https://github.com/Timendus/chip8-test-suite) : pass !
-- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL 
+- [ ] [Quirks test](https://github.com/Timendus/chip8-test-suite) : FAIL (VF reset) 
 - [x] [Keypad test](https://github.com/Timendus/chip8-test-suite) : pass !
 - [x] [random number test](https://github.com/mattmikolay/chip-8/tree/master) : pass !
-- [ ] [delay timer test](https://github.com/mattmikolay/chip-8/tree/master) : FAIL
+
+-------------------------
 
 - [ ] ...
 - [x] [Heart monitor ROM](https://github.com/mattmikolay/chip-8/tree/master) : pass !
 - [x] [Tetris ROM](https://github.com/badlogic/chip8/tree/master) : Should be Ok
 - [x] [Morse Demo](https://github.com/mattmikolay/chip-8/tree/master) : pass !
 
+--------------------------
+
 - [ ] Windows events
     - [x] Escape to quit
     - [x] Keypad Down
     - [x] Keypad Up
     - [x] Get Key
-    - [x] Beep speaker
+    - [x] Buzzer + XO-CHIP Buzzer 
 
  
 ![demo](./demo/demo.gif)

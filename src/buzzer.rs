@@ -26,13 +26,13 @@ impl AudioCallback for SquareWave {
     }
 }
 
-pub struct Beeper {
+pub struct Buzzer {
     device: AudioDevice<SquareWave>,
 }
 
-impl Beeper 
+impl Buzzer 
 {
-    pub fn init(audio_subsystem: &AudioSubsystem) -> Beeper
+    pub fn init(audio_subsystem: &AudioSubsystem) -> Buzzer
     {
         let desired_spec = AudioSpecDesired {
             freq: Some(44100),
@@ -50,7 +50,7 @@ impl Beeper
         }).unwrap();
 
 
-        return Beeper { 
+        return Buzzer { 
             device: device,
         }
     }

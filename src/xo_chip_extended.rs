@@ -4,7 +4,7 @@ use crate::{cpu_opcodes::CPUOpcodes, io_manager::IOManager};
 
 pub fn inst_f002(cpu_manager: &CPUOpcodes, io_manager: &mut IOManager)
 {
-    let i = cpu_manager.get_index_register() as usize;
+    let i = cpu_manager.index_register as usize;
 
     let first = (io_manager.ram[i + 0] as u16) << 8; 
     let secnd = io_manager.ram[i + 1] as u16;

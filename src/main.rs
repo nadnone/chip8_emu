@@ -8,7 +8,7 @@ mod constants;
 mod io_manager;
 mod cpu_opcodes;
 mod inputs;
-mod beep;
+mod buzzer;
 mod xo_chip_extended;
 
 pub fn main() {
