@@ -19,12 +19,12 @@
 
 --------------------------
 
-- [ ] Windows events
+- [x] Windows events
     - [x] Escape to quit
     - [x] Keypad Down
     - [x] Keypad Up
     - [x] Get Key
-    - [x] Buzzer + XO-CHIP Buzzer 
+    - [ ] Buzzer + XO-CHIP Buzzer (it works but i don't know how nor if it's a good point)
 
  
 ![demo](./demo/demo.gif)
@@ -44,6 +44,7 @@ Sources:
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy1
 - https://tonisagrista.com/blog/2021/chip8-spec/#timers
 - https://www.instructables.com/CHIP-8-Computer/
+- https://chip-8.github.io/extensions/
 
-XO-CHIP8 Instructions:
+XO-CHIP Instructions:
 - http://johnearnest.github.io/Octo/docs/XO-ChipSpecification.html

@@ -35,7 +35,7 @@ impl Buzzer
     pub fn init(audio_subsystem: &AudioSubsystem) -> Buzzer
     {
         let desired_spec = AudioSpecDesired {
-            freq: Some(44100),
+            freq: Some(4000),
             channels: Some(1),  
             samples: None   
         };
@@ -43,9 +43,9 @@ impl Buzzer
         let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
         
             SquareWave {
-                phase_inc: 440. / spec.freq as f32,
+                phase_inc: 400. / spec.freq as f32,
                 phase: 0.,
-                volume: 0.25
+                volume: 1.
             }
         }).unwrap();
 
@@ -79,7 +79,7 @@ impl Buzzer
             SquareWave {
                 phase_inc: pitch / spec.freq as f32,
                 phase: 0.,
-                volume: 0.25
+                volume: 1.
             }
         }).unwrap();
 
