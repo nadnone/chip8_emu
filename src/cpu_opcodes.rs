@@ -13,14 +13,6 @@ impl CPUOpcodes {
     pub fn initialize() -> CPUOpcodes
     {
 
-        // on charges les FONTS SPRITES 
-        let mut ram_tmp = [0; RAM_SIZE_BYTES];
-        for i in 0..80 
-        {
-            ram_tmp[i] = SPRITES_DATA[i];
-        }
-
-
         return CPUOpcodes {
             program_counter: PROGRAM_COUNTER_START_ADDR,
             index_register: 0,
